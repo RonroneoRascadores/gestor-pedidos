@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Pedidos - Cloud</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #486f54 0%, #82ac70 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(72, 111, 84, 0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #486f54 0%, #82ac70 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        
+        .logo-container {
+            margin-bottom: 10px;
+        }
+        
+        .logo {
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+        
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-3px); }
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .cloud-status {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-top: 5px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .cloud-online {
+            background: rgba(138, 182, 163, 0.9);
+            color: white;
+        }
+        
+        .cloud-offline {
+            background: rgba(218, 196, 103, 0.9);
+            color: #8b7355;
+        }
+        
+        .order-number {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        
+        .order-status {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 15px;
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background: rgba(218, 196, 103, 0.9);
+            color: #8b7355;
+        }
+        
+        .status-completed {
+            background: rgba(138, 182, 163, 0.9);
+            color: white;
+        }
+        
+        .form-container {
+            padding: 25px 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #486f54;
+        }
+        
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #8ab6a3;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Quicksand', sans-serif;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #486f54;
+            box-shadow: 0 0 0 3px rgba(72, 111, 84, 0.1);
+        }
+        
+        .datetime-display {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 2px solid #8ab6a3;
+            color: #486f54;
+            font-size: 14px;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .products-section {
+            background: linear-gradient(135deg, #8ab6a3 0%, rgba(138, 182, 163, 0.1) 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid #8ab6a3;
+        }
+        
+        .products-section h3 {
+            margin-bottom: 15px;
+            color: #486f54;
+            font-weight: 600;
+        }
+        
+        .product-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(138, 182, 163, 0.3);
+        }
+        
+        .product-item:last-child {
+            border-bottom: none;
+        }
+        
+        .product-name {
+            flex: 1;
+            font-weight: 500;
+            color: #486f54;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .qty-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            background: #486f54;
+            color: white;
+            border-radius: 50%;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .qty-btn:hover {
+            background: #3a5a44;
+        }
+        
+        .qty-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .quantity {
+            min-width: 30px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 16px;
+            color: #486f54;
+        }
+        
+        .total-section {
+            background: linear-gradient(135deg, #486f54 0%, #82ac70 100%);
+            color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .total-items {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #486f54 0%, #82ac70 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(72, 111, 84, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #dac467 0%, #f0d97a 100%);
+            color: #486f54;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(218, 196, 103, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #8ab6a3 0%, #a3c7b5 100%);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(138, 182, 163, 0.3);
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, #82ac70 0%, #9bc085 100%);
+            color: white;
+        }
+        
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(130, 172, 112, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .success-message {
+            background: linear-gradient(135deg, #8ab6a3 0%, rgba(138, 182, 163, 0.1) 100%);
+            color: #486f54;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 500;
+            border: 1px solid #8ab6a3;
+        }
+        
+        .error-message {
+            background: linear-gradient(135deg, #dc3545 0%, rgba(220, 53, 69, 0.1) 100%);
+            color: #dc3545;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 500;
+            border: 1px solid #dc3545;
+        }
+        
+        .manage-products-btn {
+            background: linear-gradient(135deg, #dac467 0%, #f0d97a 100%);
+            color: #486f54;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .manage-products-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(218, 196, 103, 0.3);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(72, 111, 84, 0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #dac467 0%, #f0d97a 100%);
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: #486f54;
+            font-weight: 600;
+        }
+        
+        .close {
+            color: #486f54;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            color: #3a5a44;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .import-section {
+            background: linear-gradient(135deg, #8ab6a3 0%, rgba(138, 182, 163, 0.1) 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #8ab6a3;
+        }
+        
+        .import-section h3 {
+            margin-bottom: 15px;
+            color: #486f54;
+            font-weight: 600;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 12px 15px;
+            background: #486f54;
+            color: white;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+        }
+        
+        .file-input-label:hover {
+            background: #3a5a44;
+        }
+        
+        .textarea-import {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid #8ab6a3;
+            border-radius: 8px;
+            font-family: 'Quicksand', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        .textarea-import:focus {
+            outline: none;
+            border-color: #486f54;
+        }
+        
+        .products-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .product-edit-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid #8ab6a3;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: white;
+        }
+        
+        .product-edit-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #8ab6a3;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .product-edit-input:focus {
+            outline: none;
+            border-color: #486f54;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-success {
+            background: #8ab6a3;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #7aa593;
+        }
+        
+        .add-product-section {
+            background: linear-gradient(135deg, #8ab6a3 0%, rgba(138, 182, 163, 0.1) 100%);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #8ab6a3;
+        }
+        
+        .add-product-section h3 {
+            color: #486f54;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .format-help {
+            background: linear-gradient(135deg, #dac467 0%, rgba(218, 196, 103, 0.1) 100%);
+            border: 1px solid #dac467;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .format-help strong {
+            color: #486f54;
+        }
+        
+        .history-item {
+            background: white;
+            border: 1px solid #8ab6a3;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(72, 111, 84, 0.1);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .history-order-number {
+            font-weight: 600;
+            font-size: 16px;
+            color: #486f54;
+        }
+        
+        .history-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .history-customer {
+            color: #486f54;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .history-date {
+            color: #82ac70;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .history-products {
+            background: linear-gradient(135deg, #8ab6a3 0%, rgba(138, 182, 163, 0.1) 100%);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #486f54;
+            border: 1px solid rgba(138, 182, 163, 0.3);
+        }
+        
+        .history-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .setup-section {
+            background: linear-gradient(135deg, #486f54 0%, rgba(72, 111, 84, 0.1) 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #486f54;
+        }
+        
+        .setup-section h3 {
+            color: #486f54;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .setup-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #8ab6a3;
+            border-radius: 8px;
+            font-family: 'Quicksand', sans-serif;
+            margin-bottom: 10px;
+        }
+        
+        .setup-input:focus {
+            outline: none;
+            border-color: #486f54;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-container">
+                <div class="logo-placeholder">
+                    <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                        🏪
+                    </div>
+                </div>
+            </div>
+            <h1>📋 Gestor de Pedidos</h1>
+            <div class="cloud-status" id="cloudStatus">☁️ Configurando...</div>
+            <div class="order-number" id="orderNumber">Pedido #0001</div>
+            <div class="order-status status-pending" id="orderStatus" style="display: none;">⏳ Pendiente</div>
+        </div>
+        
+        <div class="form-container">
+            <!-- Sección de configuración inicial -->
+            <div id="setupSection" class="setup-section">
+                <h3>⚙️ Configuración Inicial</h3>
+                <p style="margin-bottom: 15px; color: #486f54;">Para usar la nube, pega aquí tu URL de Google Apps Script:</p>
+                <input type="text" id="googleScriptUrl" class="setup-input" placeholder="https://script.google.com/macros/s/TU_ID/exec">
+                <button class="btn btn-primary" onclick="saveGoogleScriptUrl()" style="width: 100%; margin-bottom: 10px;">💾 Guardar y Conectar</button>
+                <button class="btn btn-secondary" onclick="skipCloudSetup()" style="width: 100%;">📱 Usar Solo Local</button>
+                <p style="font-size: 12px; color: #82ac70; margin-top: 10px;">
+                    <strong>Local:</strong> Los datos se guardan solo en este navegador<br>
+                    <strong>Nube:</strong> Los datos se sincronizan en Google Sheets
+                </p>
+            </div>
+            
+            <button class="manage-products-btn" onclick="openProductsModal()">
+                ⚙️ Gestionar Productos
+            </button>
+            
+            <div class="form-group">
+                <label for="customerName">👤 Nombre del Cliente</label>
+                <input type="text" id="customerName" placeholder="Ingresa el nombre del cliente" required>
+            </div>
+            
+            <div class="products-section">
+                <h3>🛍️ Productos</h3>
+                <div id="productsList">
+                    <!-- Los productos se cargarán dinámicamente aquí -->
+                </div>
+            </div>
+            
+            <div class="total-section">
+                <div class="total-items" id="totalItems">Total de productos: 0</div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="saveOrder()" id="saveBtn">💾 Guardar Pedido</button>
+                <button class="btn btn-secondary" onclick="printOrder()" id="printBtn" disabled>🖨️ Imprimir PDF</button>
+            </div>
+            
+            <div class="action-buttons" id="statusButtons" style="display: none; margin-top: 10px;">
+                <button class="btn btn-success" onclick="markAsCompleted()" id="completeBtn">✅ Marcar como Completado</button>
+                <button class="btn btn-info" onclick="openHistoryModal()">📋 Ver Historial</button>
+            </div>
+            
+            <div class="action-buttons" style="margin-top: 10px;">
+                <button class="btn btn-info" onclick="openOrdersListModal()">📋 Mostrar Pedidos</button>
+                <button class="btn btn-secondary" onclick="syncWithCloud()" id="syncBtn" style="display: none;">🔄 Sincronizar</button>
+            </div>
+            
+            <div id="successMessage" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Modal para lista de pedidos -->
+    <div id="ordersListModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #82ac70 0%, #9bc085 100%);">
+                <h2>📋 Lista de Pedidos</h2>
+                <span class="close" onclick="closeOrdersListModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="ordersSummary" style="background: linear-gradient(135deg, #8ab6a3 0%, rgba(138, 182, 163, 0.1) 100%); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid #8ab6a3;">
+                    <!-- Resumen de pedidos se cargará aquí -->
+                </div>
+                <div id="ordersListContainer" style="max-height: 400px; overflow-y: auto;">
+                    <!-- La lista de pedidos se cargará aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para historial de pedidos -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #486f54 0%, #82ac70 100%);">
+                <h2>📋 Historial de Pedidos</h2>
+                <span class="close" onclick="closeHistoryModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="historyList" style="max-height: 400px; overflow-y: auto;">
+                    <!-- El historial se cargará aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para gestionar productos -->
+    <div id="productsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🛍️ Gestionar Productos</h2>
+                <span class="close" onclick="closeProductsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Sección de importación -->
+                <div class="import-section">
+                    <h3>📥 Importar Productos</h3>
+                    
+                    <div class="format-help">
+                        <strong>Formatos aceptados:</strong><br>
+                        • Excel (.xlsx, .xls)<br>
+                        • Texto (.txt, .csv)<br>
+                        • Un producto por línea<br>
+                        • Ejemplo: "Pizza Margherita"
+                    </div>
+                    
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls,.txt,.csv" onchange="handleFileImport(event)">
+                        <label for="fileInput" class="file-input-label">📁 Seleccionar Archivo</label>
+                    </div>
+                    
+                    <p style="text-align: center; margin: 10px 0; color: #486f54;">O pegar texto directamente:</p>
+                    
+                    <textarea id="textImport" class="textarea-import" placeholder="Pega aquí tu lista de productos, uno por línea:&#10;Pizza Margherita&#10;Hamburguesa Clásica&#10;Empanadas (x6)"></textarea>
+                    
+                    <button class="btn btn-primary" onclick="importFromText()" style="width: 100%; margin-top: 10px;">
+                        📥 Importar desde Texto
+                    </button>
+                </div>
+                
+                <!-- Sección para agregar producto individual -->
+                <div class="add-product-section">
+                    <h3>➕ Agregar Producto</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="newProductName" placeholder="Nombre del producto" style="flex: 1; padding: 8px 12px; border: 1px solid #8ab6a3; border-radius: 5px; font-family: 'Quicksand', sans-serif;">
+                        <button class="btn-small btn-success" onclick="addSingleProduct()">Agregar</button>
+                    </div>
+                </div>
+                
+                <!-- Lista de productos actuales -->
+                <div>
+                    <h3>📋 Productos Actuales</h3>
+                    <div id="productsEditList" class="products-list">
+                        <!-- Los productos se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="saveProductsChanges()" style="flex: 1;">💾 Guardar Cambios</button>
+                    <button class="btn btn-secondary" onclick="closeProductsModal()" style="flex: 1;">❌ Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentOrderNumber = 1;
+        let quantities = {};
+        let currentOrder = null;
+        let products = {};
+        let tempProducts = {}; // Para ediciones temporales en el modal
+        let orderHistory = []; // Historial de pedidos
+        
+        // Configuración de Google Sheets
+        let GOOGLE_SCRIPT_URL = '';
+        let isOnlineMode = false;
+        
+        // Productos por defecto
+        const defaultProducts = {
+            pizza: 'Pizza Margherita',
+            burger: 'Hamburguesa Clásica',
+            empanadas: 'Empanadas (x6)',
+            drink: 'Bebida 500ml',
+            dessert: 'Postre del Día'
+        };
+
+        // Inicializar la aplicación
+        function init() {
+            checkCloudSetup();
+            loadProducts();
+            loadOrderHistory();
+            updateDateTime();
+            updateOrderNumber();
+            updateTotal();
+            
+            // Actualizar fecha y hora cada minuto
+            setInterval(updateDateTime, 60000);
+            
+            // Cargar número de pedido desde localStorage
+            const savedOrderNumber = localStorage.getItem('lastOrderNumber');
+            if (savedOrderNumber) {
+                currentOrderNumber = parseInt(savedOrderNumber) + 1;
+                updateOrderNumber();
+            }
+        }
+
+        // Verificar configuración de la nube
+        function checkCloudSetup() {
+            const savedUrl = localStorage.getItem('googleScriptUrl');
+            if (savedUrl) {
+                GOOGLE_SCRIPT_URL = savedUrl;
+                document.getElementById('setupSection').style.display = 'none';
+                testCloudConnection();
+            } else {
+                updateCloudStatus('⚙️ Configuración requerida', 'cloud-offline');
+            }
+        }
+
+        // Guardar URL de Google Apps Script
+        function saveGoogleScriptUrl() {
+            const url = document.getElementById('googleScriptUrl').value.trim();
+            if (!url) {
+                showErrorMessage('Por favor, ingresa la URL de Google Apps Script');
+                return;
+            }
+            
+            if (!url.includes('script.google.com')) {
+                showErrorMessage('La URL debe ser de Google Apps Script');
+                return;
+            }
+            
+            GOOGLE_SCRIPT_URL = url;
+            localStorage.setItem('googleScriptUrl', url);
+            document.getElementById('setupSection').style.display = 'none';
+            document.getElementById('syncBtn').style.display = 'block';
+            
+            testCloudConnection();
+            showSuccessMessage('✅ Configuración guardada. Probando conexión...');
+        }
+
+        // Saltar configuración de nube
+        function skipCloudSetup() {
+            document.getElementById('setupSection').style.display = 'none';
+            updateCloudStatus('📱 Modo Local', 'cloud-offline');
+            showSuccessMessage('✅ Usando modo local. Los datos se guardan en este navegador.');
+        }
+
+        // Probar conexión con la nube
+        async function testCloudConnection() {
+            if (!GOOGLE_SCRIPT_URL) return;
+            
+            try {
+                updateCloudStatus('🔄 Conectando...', 'cloud-offline');
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?action=test', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    isOnlineMode = true;
+                    updateCloudStatus('☁️ Conectado', 'cloud-online');
+                    loadFromCloud();
+                } else {
+                    throw new Error('Error de conexión');
+                }
+            } catch (error) {
+                isOnlineMode = false;
+                updateCloudStatus('📱 Sin conexión', 'cloud-offline');
+                console.log('Modo offline:', error);
+            }
+        }
+
+        // Actualizar estado de la nube
+        function updateCloudStatus(text, className) {
+            const statusElement = document.getElementById('cloudStatus');
+            statusElement.textContent = text;
+            statusElement.className = `cloud-status ${className}`;
+        }
+
+        // Cargar datos desde la nube
+        async function loadFromCloud() {
+            if (!isOnlineMode) return;
+            
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getOrders');
+                const data = await response.json();
+                
+                if (data.success) {
+                    orderHistory = data.orders || [];
+                    saveOrderHistory();
+                    
+                    if (data.products) {
+                        products = data.products;
+                        saveProducts();
+                        renderProductsList();
+                    }
+                    
+                    if (data.lastOrderNumber) {
+                        currentOrderNumber = data.lastOrderNumber + 1;
+                        updateOrderNumber();
+                    }
+                    
+                    showSuccessMessage('✅ Datos sincronizados desde la nube');
+                }
+            } catch (error) {
+                console.log('Error cargando desde la nube:', error);
+            }
+        }
+
+        // Sincronizar con la nube
+        async function syncWithCloud() {
+            if (!isOnlineMode) {
+                await testCloudConnection();
+                return;
+            }
+            
+            try {
+                updateCloudStatus('🔄 Sincronizando...', 'cloud-offline');
+                
+                const dataToSync = {
+                    action: 'syncData',
+                    orders: orderHistory,
+                    products: products,
+                    lastOrderNumber: currentOrderNumber - 1
+                };
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dataToSync)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateCloudStatus('☁️ Sincronizado', 'cloud-online');
+                    showSuccessMessage('✅ Datos sincronizados correctamente');
+                } else {
+                    throw new Error(result.error || 'Error de sincronización');
+                }
+            } catch (error) {
+                updateCloudStatus('❌ Error sync', 'cloud-offline');
+                showErrorMessage('Error al sincronizar: ' + error.message);
+            }
+        }
+
+        // Guardar pedido en la nube
+        async function saveOrderToCloud(order) {
+            if (!isOnlineMode) return false;
+            
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'saveOrder',
+                        order: order
+                    })
+                });
+                
+                const result = await response.json();
+                return result.success;
+            } catch (error) {
+                console.log('Error guardando en la nube:', error);
+                return false;
+            }
+        }
+
+        // Cargar productos desde localStorage o usar los por defecto
+        function loadProducts() {
+            const savedProducts = localStorage.getItem('products');
+            if (savedProducts) {
+                products = JSON.parse(savedProducts);
+            } else {
+                products = {...defaultProducts};
+                saveProducts();
+            }
+            
+            // Inicializar quantities
+            quantities = {};
+            for (const key in products) {
+                quantities[key] = 0;
+            }
+            
+            renderProductsList();
+        }
+
+        // Guardar productos en localStorage
+        function saveProducts() {
+            localStorage.setItem('products', JSON.stringify(products));
+        }
+
+        // Cargar historial de pedidos
+        function loadOrderHistory() {
+            const savedHistory = localStorage.getItem('orderHistory');
+            if (savedHistory) {
+                orderHistory = JSON.parse(savedHistory);
+            }
+        }
+
+        // Guardar historial de pedidos
+        function saveOrderHistory() {
+            localStorage.setItem('orderHistory', JSON.stringify(orderHistory));
+        }
+
+        // Renderizar lista de productos en el formulario principal
+        function renderProductsList() {
+            const container = document.getElementById('productsList');
+            container.innerHTML = '';
+            
+            for (const [key, name] of Object.entries(products)) {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product-item';
+                productDiv.innerHTML = `
+                    <span class="product-name">${name}</span>
+                    <div class="quantity-controls">
+                        <button class="qty-btn" onclick="changeQuantity('${key}', -1)">-</button>
+                        <span class="quantity" id="qty-${key}">${quantities[key] || 0}</span>
+                        <button class="qty-btn" onclick="changeQuantity('${key}', 1)">+</button>
+                    </div>
+                `;
+                container.appendChild(productDiv);
+            }
+        }
+
+        // Abrir modal de gestión de productos
+        function openProductsModal() {
+            tempProducts = {...products}; // Copia temporal para editar
+            renderProductsEditList();
+            document.getElementById('productsModal').style.display = 'block';
+        }
+
+        // Cerrar modal de gestión de productos
+        function closeProductsModal() {
+            document.getElementById('productsModal').style.display = 'none';
+            document.getElementById('textImport').value = '';
+            document.getElementById('newProductName').value = '';
+            document.getElementById('fileInput').value = '';
+        }
+
+        // Renderizar lista de productos en el modal de edición
+        function renderProductsEditList() {
+            const container = document.getElementById('productsEditList');
+            container.innerHTML = '';
+            
+            for (const [key, name] of Object.entries(tempProducts)) {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product-edit-item';
+                productDiv.innerHTML = `
+                    <input type="text" class="product-edit-input" value="${name}" onchange="updateTempProduct('${key}', this.value)">
+                    <button class="btn-small btn-danger" onclick="deleteTempProduct('${key}')">🗑️</button>
+                `;
+                container.appendChild(productDiv);
+            }
+        }
+
+        // Actualizar producto temporal
+        function updateTempProduct(key, newName) {
+            if (newName.trim()) {
+                tempProducts[key] = newName.trim();
+            }
+        }
+
+        // Eliminar producto temporal
+        function deleteTempProduct(key) {
+            delete tempProducts[key];
+            renderProductsEditList();
+        }
+
+        // Agregar producto individual
+        function addSingleProduct() {
+            const name = document.getElementById('newProductName').value.trim();
+            if (!name) {
+                alert('Por favor, ingresa el nombre del producto');
+                return;
+            }
+            
+            const key = 'product_' + Date.now();
+            tempProducts[key] = name;
+            document.getElementById('newProductName').value = '';
+            renderProductsEditList();
+        }
+
+        // Importar desde texto
+        function importFromText() {
+            const text = document.getElementById('textImport').value.trim();
+            if (!text) {
+                alert('Por favor, ingresa la lista de productos');
+                return;
+            }
+            
+            const lines = text.split('\n').filter(line => line.trim());
+            const newProducts = {};
+            
+            lines.forEach((line, index) => {
+                const productName = line.trim();
+                if (productName) {
+                    const key = 'imported_' + Date.now() + '_' + index;
+                    newProducts[key] = productName;
+                }
+            });
+            
+            tempProducts = {...tempProducts, ...newProducts};
+            document.getElementById('textImport').value = '';
+            renderProductsEditList();
+            
+            showSuccessMessage(`✅ ${Object.keys(newProducts).length} productos importados`);
+        }
+
+        // Manejar importación de archivos
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                // Leer archivo Excel
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                        
+                        const newProducts = {};
+                        jsonData.forEach((row, index) => {
+                            if (row[0] && typeof row[0] === 'string') {
+                                const productName = row[0].trim();
+                                if (productName) {
+                                    const key = 'excel_' + Date.now() + '_' + index;
+                                    newProducts[key] = productName;
+                                }
+                            }
+                        });
+                        
+                        tempProducts = {...tempProducts, ...newProducts};
+                        renderProductsEditList();
+                        showSuccessMessage(`✅ ${Object.keys(newProducts).length} productos importados desde Excel`);
+                        
+                    } catch (error) {
+                        alert('Error al leer el archivo Excel: ' + error.message);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+                
+            } else {
+                // Leer archivo de texto
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    const lines = text.split('\n').filter(line => line.trim());
+                    const newProducts = {};
+                    
+                    lines.forEach((line, index) => {
+                        const productName = line.trim();
+                        if (productName) {
+                            const key = 'file_' + Date.now() + '_' + index;
+                            newProducts[key] = productName;
+                        }
+                    });
+                    
+                    tempProducts = {...tempProducts, ...newProducts};
+                    renderProductsEditList();
+                    showSuccessMessage(`✅ ${Object.keys(newProducts).length} productos importados desde archivo`);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Guardar cambios de productos
+        function saveProductsChanges() {
+            if (Object.keys(tempProducts).length === 0) {
+                alert('Debe haber al menos un producto');
+                return;
+            }
+            
+            products = {...tempProducts};
+            
+            // Actualizar quantities para incluir nuevos productos y remover eliminados
+            const newQuantities = {};
+            for (const key in products) {
+                newQuantities[key] = quantities[key] || 0;
+            }
+            quantities = newQuantities;
+            
+            saveProducts();
+            renderProductsList();
+            closeProductsModal();
+            showSuccessMessage('✅ Productos actualizados correctamente');
+        }
+
+        // Actualizar fecha y hora
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            };
+            const datetimeElement = document.getElementById('datetime');
+            if (datetimeElement) {
+                datetimeElement.textContent = now.toLocaleDateString('es-ES', options);
+            }
+        }
+
+        // Actualizar número de pedido
+        function updateOrderNumber() {
+            document.getElementById('orderNumber').textContent = `Pedido #${currentOrderNumber.toString().padStart(4, '0')}`;
+        }
+
+        // Cambiar cantidad de producto
+        function changeQuantity(product, change) {
+            quantities[product] = Math.max(0, quantities[product] + change);
+            document.getElementById(`qty-${product}`).textContent = quantities[product];
+            updateTotal();
+        }
+
+        // Actualizar total de productos
+        function updateTotal() {
+            const total = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+            document.getElementById('totalItems').textContent = `Total de productos: ${total}`;
+        }
+
+        // Guardar pedido
+        async function saveOrder() {
+            const customerName = document.getElementById('customerName').value.trim();
+            
+            if (!customerName) {
+                alert('Por favor, ingresa el nombre del cliente');
+                return;
+            }
+            
+            const total = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+            if (total === 0) {
+                alert('Por favor, selecciona al menos un producto');
+                return;
+            }
+            
+            // Crear objeto del pedido
+            currentOrder = {
+                orderNumber: currentOrderNumber,
+                customerName: customerName,
+                datetime: new Date(),
+                products: {...quantities},
+                productNames: {...products}, // Guardar nombres de productos
+                total: total,
+                status: 'pending' // Estado inicial: pendiente
+            };
+            
+            // Intentar guardar en la nube primero
+            let cloudSaved = false;
+            if (isOnlineMode) {
+                cloudSaved = await saveOrderToCloud(currentOrder);
+            }
+            
+            // Agregar al historial local
+            orderHistory.push({...currentOrder});
+            saveOrderHistory();
+            
+            // Guardar en localStorage
+            localStorage.setItem('lastOrderNumber', currentOrderNumber.toString());
+            
+            // Mostrar mensaje de éxito
+            const message = cloudSaved ? 
+                '✅ Pedido guardado en la nube y localmente' : 
+                '✅ Pedido guardado localmente';
+            showSuccessMessage(message);
+            
+            // Mostrar estado y botones de acción
+            document.getElementById('orderStatus').style.display = 'inline-block';
+            document.getElementById('statusButtons').style.display = 'flex';
+            document.getElementById('printBtn').disabled = false;
+            
+            // Preparar para el siguiente pedido
+            currentOrderNumber++;
+            updateOrderNumber();
+        }
+
+        // Mostrar mensaje de éxito
+        function showSuccessMessage(message) {
+            const messageDiv = document.getElementById('successMessage');
+            messageDiv.innerHTML = `<div class="success-message">${message}</div>`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Mostrar mensaje de error
+        function showErrorMessage(message) {
+            const messageDiv = document.getElementById('successMessage');
+            messageDiv.innerHTML = `<div class="error-message">${message}</div>`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Imprimir pedido en PDF
+        function printOrder() {
+            if (!currentOrder) {
+                alert('No hay pedido para imprimir');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            
+            // Crear PDF con tamaño personalizado (100mm x 150mm)
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: [100, 150]
+            });
+            
+            // Configurar fuente
+            pdf.setFont('helvetica');
+            
+            // Título
+            pdf.setFontSize(16);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('ORDEN DE PEDIDO', 50, 15, { align: 'center' });
+            
+            // Número de pedido
+            pdf.setFontSize(12);
+            pdf.text(`Pedido #${currentOrder.orderNumber.toString().padStart(4, '0')}`, 50, 25, { align: 'center' });
+            
+            // Línea separadora
+            pdf.line(10, 30, 90, 30);
+            
+            // Información del cliente
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Cliente:', 10, 40);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(currentOrder.customerName, 10, 47);
+            
+            // Fecha y hora
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Fecha:', 10, 57);
+            pdf.setFont('helvetica', 'normal');
+            const dateStr = currentOrder.datetime.toLocaleDateString('es-ES');
+            const timeStr = currentOrder.datetime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            pdf.text(`${dateStr} ${timeStr}`, 10, 64);
+            
+            // Línea separadora
+            pdf.line(10, 70, 90, 70);
+            
+            // Productos
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('PRODUCTOS:', 10, 80);
+            
+            let yPosition = 87;
+            pdf.setFont('helvetica', 'normal');
+            
+            for (const [key, quantity] of Object.entries(currentOrder.products)) {
+                if (quantity > 0) {
+                    const productName = products[key];
+                    pdf.text(`${quantity}x ${productName}`, 10, yPosition);
+                    yPosition += 7;
+                }
+            }
+            
+            // Línea separadora
+            pdf.line(10, yPosition + 3, 90, yPosition + 3);
+            
+            // Total
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(`TOTAL PRODUCTOS: ${currentOrder.total}`, 10, yPosition + 12);
+            
+            // Pie de página
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('Gracias por su pedido', 50, 140, { align: 'center' });
+            
+            // Descargar PDF
+            pdf.save(`Pedido_${currentOrder.orderNumber.toString().padStart(4, '0')}.pdf`);
+            
+            showSuccessMessage('📄 PDF generado correctamente');
+        }
+
+        // Marcar pedido como completado
+        async function markAsCompleted() {
+            if (!currentOrder) {
+                alert('No hay pedido activo para completar');
+                return;
+            }
+            
+            // Actualizar estado en el pedido actual
+            currentOrder.status = 'completed';
+            currentOrder.completedAt = new Date();
+            
+            // Actualizar en el historial
+            const historyIndex = orderHistory.findIndex(order => order.orderNumber === currentOrder.orderNumber);
+            if (historyIndex !== -1) {
+                orderHistory[historyIndex].status = 'completed';
+                orderHistory[historyIndex].completedAt = new Date();
+                saveOrderHistory();
+            }
+            
+            // Intentar actualizar en la nube
+            if (isOnlineMode) {
+                await saveOrderToCloud(currentOrder);
+            }
+            
+            // Actualizar interfaz
+            const statusElement = document.getElementById('orderStatus');
+            statusElement.textContent = '✅ Completado';
+            statusElement.className = 'order-status status-completed';
+            
+            // Deshabilitar botón de completar
+            document.getElementById('completeBtn').disabled = true;
+            document.getElementById('completeBtn').textContent = '✅ Completado';
+            
+            showSuccessMessage('✅ Pedido marcado como completado');
+        }
+
+        // Abrir modal de historial
+        function openHistoryModal() {
+            renderHistoryList();
+            document.getElementById('historyModal').style.display = 'block';
+        }
+
+        // Cerrar modal de historial
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
+        // Renderizar lista de historial
+        function renderHistoryList() {
+            const container = document.getElementById('historyList');
+            container.innerHTML = '';
+            
+            if (orderHistory.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #486f54; padding: 20px;">No hay pedidos en el historial</p>';
+                return;
+            }
+            
+            // Ordenar por número de pedido descendente (más recientes primero)
+            const sortedHistory = [...orderHistory].sort((a, b) => b.orderNumber - a.orderNumber);
+            
+            sortedHistory.forEach(order => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                const statusClass = order.status === 'completed' ? 'status-completed' : 'status-pending';
+                const statusText = order.status === 'completed' ? '✅ Completado' : '⏳ Pendiente';
+                
+                // Crear lista de productos
+                let productsList = '';
+                for (const [key, quantity] of Object.entries(order.products)) {
+                    if (quantity > 0) {
+                        const productName = order.productNames[key] || 'Producto desconocido';
+                        productsList += `${quantity}x ${productName}<br>`;
+                    }
+                }
+                
+                const dateStr = new Date(order.datetime).toLocaleDateString('es-ES');
+                const timeStr = new Date(order.datetime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                
+                historyItem.innerHTML = `
+                    <div class="history-header">
+                        <span class="history-order-number">Pedido #${order.orderNumber.toString().padStart(4, '0')}</span>
+                        <span class="history-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="history-customer">👤 ${order.customerName}</div>
+                    <div class="history-date">📅 ${dateStr} ${timeStr}</div>
+                    <div class="history-products">
+                        <strong>Productos:</strong><br>
+                        ${productsList}
+                        <strong>Total: ${order.total} productos</strong>
+                    </div>
+                    <div class="history-actions">
+                        <button class="btn-small btn-secondary" onclick="reprintOrder(${order.orderNumber})">🖨️ Reimprimir</button>
+                        ${order.status === 'pending' ? `<button class="btn-small btn-success" onclick="completeHistoryOrder(${order.orderNumber})">✅ Completar</button>` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(historyItem);
+            });
+        }
+
+        // Completar pedido desde historial
+        async function completeHistoryOrder(orderNumber) {
+            const orderIndex = orderHistory.findIndex(order => order.orderNumber === orderNumber);
+            if (orderIndex !== -1) {
+                orderHistory[orderIndex].status = 'completed';
+                orderHistory[orderIndex].completedAt = new Date();
+                saveOrderHistory();
+                
+                // Actualizar en la nube si está disponible
+                if (isOnlineMode) {
+                    await saveOrderToCloud(orderHistory[orderIndex]);
+                }
+                
+                renderHistoryList();
+                showSuccessMessage(`✅ Pedido #${orderNumber.toString().padStart(4, '0')} completado`);
+            }
+        }
+
+        // Reimprimir pedido desde historial
+        function reprintOrder(orderNumber) {
+            const order = orderHistory.find(o => o.orderNumber === orderNumber);
+            if (!order) {
+                alert('Pedido no encontrado');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            
+            // Crear PDF con tamaño personalizado (100mm x 150mm)
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: [100, 150]
+            });
+            
+            // Configurar fuente
+            pdf.setFont('helvetica');
+            
+            // Título
+            pdf.setFontSize(16);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('ORDEN DE PEDIDO', 50, 15, { align: 'center' });
+            
+            // Número de pedido
+            pdf.setFontSize(12);
+            pdf.text(`Pedido #${order.orderNumber.toString().padStart(4, '0')}`, 50, 25, { align: 'center' });
+            
+            // Estado
+            const statusText = order.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE';
+            pdf.text(`Estado: ${statusText}`, 50, 32, { align: 'center' });
+            
+            // Línea separadora
+            pdf.line(10, 37, 90, 37);
+            
+            // Información del cliente
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Cliente:', 10, 47);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(order.customerName, 10, 54);
+            
+            // Fecha y hora
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Fecha:', 10, 64);
+            pdf.setFont('helvetica', 'normal');
+            const dateStr = new Date(order.datetime).toLocaleDateString('es-ES');
+            const timeStr = new Date(order.datetime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            pdf.text(`${dateStr} ${timeStr}`, 10, 71);
+            
+            // Línea separadora
+            pdf.line(10, 77, 90, 77);
+            
+            // Productos
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('PRODUCTOS:', 10, 87);
+            
+            let yPosition = 94;
+            pdf.setFont('helvetica', 'normal');
+            
+            for (const [key, quantity] of Object.entries(order.products)) {
+                if (quantity > 0) {
+                    const productName = order.productNames[key] || 'Producto desconocido';
+                    pdf.text(`${quantity}x ${productName}`, 10, yPosition);
+                    yPosition += 7;
+                }
+            }
+            
+            // Línea separadora
+            pdf.line(10, yPosition + 3, 90, yPosition + 3);
+            
+            // Total
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(`TOTAL PRODUCTOS: ${order.total}`, 10, yPosition + 12);
+            
+            // Pie de página
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('Gracias por su pedido', 50, 140, { align: 'center' });
+            
+            // Descargar PDF
+            pdf.save(`Pedido_${order.orderNumber.toString().padStart(4, '0')}_reimpresion.pdf`);
+            
+            showSuccessMessage('📄 PDF reimpreso correctamente');
+        }
+
+        // Abrir modal de lista de pedidos
+        function openOrdersListModal() {
+            renderOrdersList();
+            document.getElementById('ordersListModal').style.display = 'block';
+        }
+
+        // Cerrar modal de lista de pedidos
+        function closeOrdersListModal() {
+            document.getElementById('ordersListModal').style.display = 'none';
+        }
+
+        // Renderizar lista de pedidos ordenada
+        function renderOrdersList() {
+            const summaryContainer = document.getElementById('ordersSummary');
+            const listContainer = document.getElementById('ordersListContainer');
+            
+            if (orderHistory.length === 0) {
+                summaryContainer.innerHTML = '<p style="color: #486f54;">No hay pedidos registrados</p>';
+                listContainer.innerHTML = '<p style="text-align: center; color: #486f54; padding: 20px;">No hay pedidos para mostrar</p>';
+                return;
+            }
+            
+            // Contar pedidos por estado
+            const pendingOrders = orderHistory.filter(order => order.status === 'pending');
+            const completedOrders = orderHistory.filter(order => order.status === 'completed');
+            
+            // Mostrar resumen
+            summaryContainer.innerHTML = `
+                <div style="display: flex; justify-content: space-around; align-items: center;">
+                    <div>
+                        <div style="font-size: 24px; font-weight: bold; color: #dac467;">⏳ ${pendingOrders.length}</div>
+                        <div style="font-size: 14px; color: #486f54;">Pendientes</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 24px; font-weight: bold; color: #8ab6a3;">✅ ${completedOrders.length}</div>
+                        <div style="font-size: 14px; color: #486f54;">Completados</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 24px; font-weight: bold; color: #486f54;">${orderHistory.length}</div>
+                        <div style="font-size: 14px; color: #486f54;">Total</div>
+                    </div>
+                </div>
+            `;
+            
+            // Ordenar pedidos: primero pendientes (más antiguos primero), luego completados (más antiguos primero)
+            const sortedOrders = [
+                ...pendingOrders.sort((a, b) => a.orderNumber - b.orderNumber),
+                ...completedOrders.sort((a, b) => a.orderNumber - b.orderNumber)
+            ];
+            
+            listContainer.innerHTML = '';
+            
+            sortedOrders.forEach(order => {
+                const orderItem = document.createElement('div');
+                orderItem.className = 'history-item';
+                
+                // Agregar clase especial para pedidos pendientes
+                if (order.status === 'pending') {
+                    orderItem.style.border = '2px solid #dac467';
+                    orderItem.style.backgroundColor = '#fefbf0';
+                }
+                
+                const statusClass = order.status === 'completed' ? 'status-completed' : 'status-pending';
+                const statusText = order.status === 'completed' ? '✅ Completado' : '⏳ Pendiente';
+                
+                // Crear lista de productos
+                let productsList = '';
+                for (const [key, quantity] of Object.entries(order.products)) {
+                    if (quantity > 0) {
+                        const productName = order.productNames[key] || 'Producto desconocido';
+                        productsList += `${quantity}x ${productName}<br>`;
+                    }
+                }
+                
+                const dateStr = new Date(order.datetime).toLocaleDateString('es-ES');
+                const timeStr = new Date(order.datetime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                
+                // Calcular tiempo transcurrido
+                const now = new Date();
+                const orderDate = new Date(order.datetime);
+                const timeDiff = now - orderDate;
+                const minutesAgo = Math.floor(timeDiff / (1000 * 60));
+                const hoursAgo = Math.floor(minutesAgo / 60);
+                
+                let timeAgo = '';
+                if (minutesAgo < 60) {
+                    timeAgo = `hace ${minutesAgo} min`;
+                } else if (hoursAgo < 24) {
+                    timeAgo = `hace ${hoursAgo}h ${minutesAgo % 60}min`;
+                } else {
+                    const daysAgo = Math.floor(hoursAgo / 24);
+                    timeAgo = `hace ${daysAgo} día${daysAgo > 1 ? 's' : ''}`;
+                }
+                
+                orderItem.innerHTML = `
+                    <div class="history-header">
+                        <span class="history-order-number">Pedido #${order.orderNumber.toString().padStart(4, '0')}</span>
+                        <span class="history-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="history-customer">👤 ${order.customerName}</div>
+                    <div class="history-date">📅 ${dateStr} ${timeStr} <span style="color: #82ac70; font-size: 12px;">(${timeAgo})</span></div>
+                    <div class="history-products">
+                        <strong>Productos:</strong><br>
+                        ${productsList}
+                        <strong>Total: ${order.total} productos</strong>
+                    </div>
+                    <div class="history-actions">
+                        <button class="btn-small btn-secondary" onclick="reprintOrder(${order.orderNumber})">🖨️ Reimprimir</button>
+                        ${order.status === 'pending' ? `<button class="btn-small btn-success" onclick="completeOrderFromList(${order.orderNumber})">✅ Completar</button>` : ''}
+                    </div>
+                `;
+                
+                listContainer.appendChild(orderItem);
+            });
+        }
+
+        // Completar pedido desde la lista
+        async function completeOrderFromList(orderNumber) {
+            const orderIndex = orderHistory.findIndex(order => order.orderNumber === orderNumber);
+            if (orderIndex !== -1) {
+                orderHistory[orderIndex].status = 'completed';
+                orderHistory[orderIndex].completedAt = new Date();
+                saveOrderHistory();
+                
+                // Actualizar en la nube si está disponible
+                if (isOnlineMode) {
+                    await saveOrderToCloud(orderHistory[orderIndex]);
+                }
+                
+                renderOrdersList(); // Actualizar la lista
+                showSuccessMessage(`✅ Pedido #${orderNumber.toString().padStart(4, '0')} completado`);
+            }
+        }
+
+        // Cerrar modal al hacer clic fuera de él
+        window.onclick = function(event) {
+            const productsModal = document.getElementById('productsModal');
+            const historyModal = document.getElementById('historyModal');
+            const ordersListModal = document.getElementById('ordersListModal');
+            if (event.target === productsModal) {
+                closeProductsModal();
+            }
+            if (event.target === historyModal) {
+                closeHistoryModal();
+            }
+            if (event.target === ordersListModal) {
+                closeOrdersListModal();
+            }
+        }
+
+        // Inicializar cuando se carga la página
+        window.onload = init;
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b97383b70ba12e',t:'MTc1NzI4MjEzNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
