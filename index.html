@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Pedidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         .fade-in {
             animation: fadeIn 0.3s ease-in;
@@ -68,10 +69,16 @@
 
         <!-- Main App Section -->
         <div id="appSection" class="space-y-6">
-            <!-- New Order Button -->
-            <button onclick="showNewOrderForm()" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
-                ➕ Nuevo Pedido
-            </button>
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-1 gap-3">
+                <button onclick="showNewOrderForm()" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                    ➕ Nuevo Pedido
+                </button>
+                
+                <button onclick="showProductsManager()" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                    🛠️ Gestionar Productos
+                </button>
+            </div>
 
             <!-- Orders List -->
             <div class="bg-white rounded-xl shadow-lg p-6">
@@ -127,6 +134,60 @@
             </div>
         </div>
 
+        <!-- Products Manager Modal -->
+        <div id="productsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">🛠️ Gestionar Productos</h2>
+                        <button onclick="closeProductsManager()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    </div>
+
+                    <!-- Add Products Section -->
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <h3 class="text-lg font-medium text-gray-800 mb-3">➕ Agregar Productos</h3>
+                        
+                        <!-- Single Product Form -->
+                        <form id="addProductForm" class="space-y-3 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del producto:</label>
+                                <input type="text" id="newProductName" required placeholder="Ej: Pizza Napolitana"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                            </div>
+                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                                ➕ Agregar Producto
+                            </button>
+                        </form>
+                        
+                        <!-- Bulk Import -->
+                        <div class="border-t pt-4">
+                            <h4 class="text-md font-medium text-gray-700 mb-2">📋 Importar Lista</h4>
+                            <textarea id="bulkProductsText" placeholder="Pega tu lista aquí, un producto por línea:&#10;Pizza Margarita&#10;Pizza Pepperoni&#10;Coca Cola&#10;Agua Mineral" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm h-24 resize-none"></textarea>
+                            <button onclick="importBulkProducts()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                                📥 Importar Lista
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Products List -->
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-3">📦 Productos Actuales</h3>
+                        <div id="productsManagerList" class="space-y-2">
+                            <!-- Products will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 pt-4 mt-6 border-t">
+                        <button onclick="closeProductsManager()" 
+                                class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Clear Confirmation Modal -->
         <div id="clearModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm">
@@ -163,12 +224,12 @@
         // Global variables
         let orders = [];
         let products = {
-            pizza_margarita: { name: 'Pizza Margarita', price: 12 },
-            pizza_pepperoni: { name: 'Pizza Pepperoni', price: 14 },
-            pizza_hawaiana: { name: 'Pizza Hawaiana', price: 13 },
-            bebida_cola: { name: 'Coca Cola', price: 3 },
-            bebida_agua: { name: 'Agua', price: 2 },
-            postre_helado: { name: 'Helado', price: 5 }
+            pizza_margarita: { name: 'Pizza Margarita', price: 0 },
+            pizza_pepperoni: { name: 'Pizza Pepperoni', price: 0 },
+            pizza_hawaiana: { name: 'Pizza Hawaiana', price: 0 },
+            bebida_cola: { name: 'Coca Cola', price: 0 },
+            bebida_agua: { name: 'Agua', price: 0 },
+            postre_helado: { name: 'Helado', price: 0 }
         };
         let currentOrder = {};
         let confirmCount = 0;
@@ -178,9 +239,229 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadConfig();
             loadOrders();
+            loadProducts();
             updateOrdersList();
             createProductsSection();
         });
+
+        // Products management functions
+        function loadProducts() {
+            const savedProducts = localStorage.getItem('products');
+            if (savedProducts) {
+                products = JSON.parse(savedProducts);
+            }
+        }
+
+        function saveProducts() {
+            localStorage.setItem('products', JSON.stringify(products));
+        }
+
+        function showProductsManager() {
+            updateProductsManagerList();
+            document.getElementById('productsModal').classList.remove('hidden');
+            document.getElementById('productsModal').classList.add('flex');
+        }
+
+        function closeProductsManager() {
+            document.getElementById('productsModal').classList.add('hidden');
+            document.getElementById('productsModal').classList.remove('flex');
+            // Refresh products section in new order form
+            createProductsSection();
+        }
+
+        function updateProductsManagerList() {
+            const container = document.getElementById('productsManagerList');
+            
+            if (Object.keys(products).length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No hay productos</p>';
+                return;
+            }
+            
+            // Clear container first
+            container.innerHTML = '';
+            
+            // Create elements properly with event listeners
+            Object.entries(products).forEach(([key, product]) => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'flex items-center justify-between p-3 border border-gray-200 rounded-lg';
+                
+                productDiv.innerHTML = `
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-800">${product.name}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="edit-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                            ✏️ Editar
+                        </button>
+                        <button class="delete-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                
+                // Add event listeners properly
+                const editBtn = productDiv.querySelector('.edit-btn');
+                const deleteBtn = productDiv.querySelector('.delete-btn');
+                
+                editBtn.addEventListener('click', () => editProduct(key));
+                deleteBtn.addEventListener('click', () => deleteProduct(key));
+                
+                container.appendChild(productDiv);
+            });
+        }
+
+        function editProduct(key) {
+            const product = products[key];
+            const newName = prompt('Nuevo nombre:', product.name);
+            if (newName && newName.trim()) {
+                products[key].name = newName.trim();
+                saveProducts();
+                updateProductsManagerList();
+                createProductsSection(); // Refresh the order form too
+                showMessage('✅ Producto actualizado correctamente', 'success');
+            }
+        }
+
+        function deleteProduct(key) {
+            const product = products[key];
+            if (confirm(`¿Estás seguro de eliminar "${product.name}"?`)) {
+                delete products[key];
+                saveProducts();
+                updateProductsManagerList();
+                createProductsSection(); // Refresh the order form too
+                showMessage('🗑️ Producto eliminado correctamente', 'success');
+            }
+        }
+
+        // Add product form handler
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('addProductForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('newProductName').value.trim();
+                
+                if (!name) {
+                    showMessage('Por favor ingresa el nombre del producto', 'error');
+                    return;
+                }
+                
+                // Generate unique key
+                const key = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') + '_' + Date.now();
+                
+                products[key] = {
+                    name: name,
+                    price: 0 // Default price, not used in display
+                };
+                
+                saveProducts();
+                updateProductsManagerList();
+                createProductsSection(); // Refresh the order form
+                
+                // Clear form
+                document.getElementById('newProductName').value = '';
+                
+                showMessage('✅ Producto agregado correctamente', 'success');
+            });
+        });
+
+        // Bulk import function
+        function importBulkProducts() {
+            const text = document.getElementById('bulkProductsText').value.trim();
+            if (!text) {
+                showMessage('Por favor pega la lista de productos', 'error');
+                return;
+            }
+            
+            const lines = text.split('\n').filter(line => line.trim());
+            let addedCount = 0;
+            
+            lines.forEach(line => {
+                const name = line.trim();
+                if (name) {
+                    // Check if product already exists
+                    const existingKey = Object.keys(products).find(key => 
+                        products[key].name.toLowerCase() === name.toLowerCase()
+                    );
+                    
+                    if (!existingKey) {
+                        const key = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') + '_' + Date.now() + '_' + addedCount;
+                        products[key] = {
+                            name: name,
+                            price: 0
+                        };
+                        addedCount++;
+                    }
+                }
+            });
+            
+            if (addedCount > 0) {
+                saveProducts();
+                updateProductsManagerList();
+                createProductsSection();
+                document.getElementById('bulkProductsText').value = '';
+                showMessage(`✅ ${addedCount} productos agregados correctamente`, 'success');
+            } else {
+                showMessage('No se agregaron productos nuevos', 'info');
+            }
+        }
+
+        // PDF Export function
+        function exportOrderToPDF(order) {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Header
+                doc.setFontSize(20);
+                doc.text('PEDIDO #' + order.orderNumber, 20, 30);
+                
+                // Order info
+                doc.setFontSize(12);
+                const date = new Date(order.datetime);
+                doc.text('Cliente: ' + order.customerName, 20, 50);
+                doc.text('Fecha: ' + date.toLocaleDateString(), 20, 60);
+                doc.text('Hora: ' + date.toLocaleTimeString(), 20, 70);
+                
+                // Products header
+                doc.setFontSize(14);
+                doc.text('PRODUCTOS:', 20, 90);
+                
+                // Products list
+                doc.setFontSize(11);
+                let yPosition = 105;
+                
+                Object.entries(order.products || {}).forEach(([key, quantity]) => {
+                    if (quantity > 0) {
+                        const productName = order.productNames[key] || 'Producto';
+                        doc.text(`${quantity}x ${productName}`, 25, yPosition);
+                        yPosition += 10;
+                    }
+                });
+                
+                // Total
+                doc.setFontSize(14);
+                doc.text('TOTAL: ' + order.total + ' items', 20, yPosition + 20);
+                
+                // Status
+                doc.setFontSize(12);
+                const status = order.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE';
+                doc.text('Estado: ' + status, 20, yPosition + 35);
+                
+                // Footer
+                doc.setFontSize(10);
+                doc.text('Generado el ' + new Date().toLocaleString(), 20, 280);
+                
+                // Save PDF
+                const fileName = `Pedido_${order.orderNumber}_${order.customerName.replace(/\s+/g, '_')}.pdf`;
+                doc.save(fileName);
+                
+                showMessage('📄 PDF generado correctamente', 'success');
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                showMessage('❌ Error al generar PDF: ' + error.message, 'error');
+            }
+        }
 
         // Configuration functions
         function loadConfig() {
@@ -374,13 +655,17 @@
             const section = document.getElementById('productsSection');
             section.innerHTML = '';
             
+            if (Object.keys(products).length === 0) {
+                section.innerHTML = '<p class="text-gray-500 text-center py-4">No hay productos disponibles. Agrega productos primero.</p>';
+                return;
+            }
+            
             Object.entries(products).forEach(([key, product]) => {
                 const productDiv = document.createElement('div');
                 productDiv.className = 'flex items-center justify-between p-3 border border-gray-200 rounded-lg';
                 productDiv.innerHTML = `
                     <div class="flex-1">
                         <div class="font-medium text-gray-800">${product.name}</div>
-                        <div class="text-sm text-gray-600">$${product.price}</div>
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="updateQuantity('${key}', -1)" 
@@ -396,7 +681,10 @@
 
         function resetProductQuantities() {
             Object.keys(products).forEach(key => {
-                document.getElementById(`qty_${key}`).textContent = '0';
+                const qtyElement = document.getElementById(`qty_${key}`);
+                if (qtyElement) {
+                    qtyElement.textContent = '0';
+                }
                 currentOrder.products[key] = 0;
             });
         }
@@ -408,7 +696,10 @@
             currentOrder.products[productKey] = newQty;
             currentOrder.productNames[productKey] = products[productKey].name;
             
-            document.getElementById(`qty_${productKey}`).textContent = newQty;
+            const qtyElement = document.getElementById(`qty_${productKey}`);
+            if (qtyElement) {
+                qtyElement.textContent = newQty;
+            }
             updateOrderTotal();
         }
 
@@ -416,12 +707,12 @@
             let total = 0;
             Object.entries(currentOrder.products || {}).forEach(([key, quantity]) => {
                 if (quantity > 0) {
-                    total += products[key].price * quantity;
+                    total += quantity; // Just count quantities since no prices
                 }
             });
             
             currentOrder.total = total;
-            document.getElementById('orderTotal').textContent = `$${total}`;
+            document.getElementById('orderTotal').textContent = `${total} items`;
         }
 
         // Form submission using GET
@@ -546,9 +837,15 @@
                         <div class="text-gray-700 mb-1">👤 ${order.customerName}</div>
                         <div class="text-sm text-gray-600 mb-2">🍕 ${productsList}</div>
                         <div class="flex justify-between items-center">
-                            <div class="font-semibold text-green-600">💰 $${order.total}</div>
-                            <div class="text-xs px-2 py-1 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                ${order.status === 'completed' ? '✅ Completado' : '⏳ Pendiente'}
+                            <div class="font-semibold text-blue-600">📦 ${order.total} items</div>
+                            <div class="flex gap-2 items-center">
+                                <button onclick="exportOrderToPDF(orders.find(o => o.orderNumber === ${order.orderNumber}))" 
+                                        class="text-xs px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded">
+                                    📄 PDF
+                                </button>
+                                <div class="text-xs px-2 py-1 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${order.status === 'completed' ? '✅ Completado' : '⏳ Pendiente'}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -634,11 +931,20 @@
         function performClear() {
             localStorage.clear();
             orders = [];
+            products = {
+                pizza_margarita: { name: 'Pizza Margarita', price: 0 },
+                pizza_pepperoni: { name: 'Pizza Pepperoni', price: 0 },
+                pizza_hawaiana: { name: 'Pizza Hawaiana', price: 0 },
+                bebida_cola: { name: 'Coca Cola', price: 0 },
+                bebida_agua: { name: 'Agua', price: 0 },
+                postre_helado: { name: 'Helado', price: 0 }
+            };
             scriptUrl = '';
             
             document.getElementById('scriptUrl').value = '';
             updateConnectionStatus('disconnected');
             updateOrdersList();
+            createProductsSection();
             closeClearModal();
             
             showMessage('🗑️ Todos los datos han sido eliminados', 'success');
@@ -671,5 +977,5 @@
             console.log(`[${type.toUpperCase()}] ${message}`);
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ba04aba7609b14',t:'MTc1NzI4ODA4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ba1f8110d89b14',t:'MTc1NzI4OTE4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
