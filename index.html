@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Pedidos - Cloud</title>
+    <title>Gestor de Pedidos - VERSION6</title>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -35,20 +35,7 @@
             color: white;
             padding: 25px 20px;
             text-align: center;
-        }
-        
-        .logo-container {
-            margin-bottom: 10px;
-        }
-        
-        .logo {
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-            animation: logoFloat 3s ease-in-out infinite;
-        }
-        
-        @keyframes logoFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-3px); }
+            position: relative;
         }
         
         .header h1 {
@@ -618,18 +605,122 @@
             outline: none;
             border-color: #486f54;
         }
+
+        /* VERSION6 - Nuevas funcionalidades */
+        .new-order-btn {
+            background: linear-gradient(135deg, #82ac70 0%, #9bc085 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .new-order-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(130, 172, 112, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #8ab6a3;
+            box-shadow: 0 2px 4px rgba(72, 111, 84, 0.1);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #486f54;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #82ac70;
+            font-weight: 500;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .version-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .filter-section {
+            background: linear-gradient(135deg, #dac467 0%, rgba(218, 196, 103, 0.1) 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #dac467;
+        }
+
+        .filter-section h3 {
+            color: #486f54;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 12px;
+            border: 1px solid #dac467;
+            background: white;
+            color: #486f54;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: #dac467;
+            color: white;
+        }
+
+        .filter-btn:hover {
+            background: #dac467;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo-container">
-                <div class="logo-placeholder">
-                    <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">
-                        🏪
-                    </div>
-                </div>
-            </div>
+            <div class="version-badge">VERSION6</div>
             <h1>📋 Gestor de Pedidos</h1>
             <div class="cloud-status" id="cloudStatus">☁️ Configurando...</div>
             <div class="order-number" id="orderNumber">Pedido #0001</div>
@@ -649,6 +740,25 @@
                     <strong>Nube:</strong> Los datos se sincronizan en Google Sheets
                 </p>
             </div>
+
+            <!-- Estadísticas rápidas -->
+            <div id="statsSection" style="display: none;">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalOrdersToday">0</div>
+                        <div class="stat-label">Pedidos Hoy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pendingOrders">0</div>
+                        <div class="stat-label">Pendientes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón para nuevo pedido -->
+            <button class="new-order-btn" onclick="startNewOrder()" id="newOrderBtn" style="display: none;">
+                ➕ Nuevo Pedido
+            </button>
             
             <button class="manage-products-btn" onclick="openProductsModal()">
                 ⚙️ Gestionar Productos
@@ -680,9 +790,11 @@
                 <button class="btn btn-info" onclick="openHistoryModal()">📋 Ver Historial</button>
             </div>
             
-            <div class="action-buttons" style="margin-top: 10px;">
+            <div class="quick-actions">
                 <button class="btn btn-info" onclick="openOrdersListModal()">📋 Mostrar Pedidos</button>
                 <button class="btn btn-secondary" onclick="syncWithCloud()" id="syncBtn" style="display: none;">🔄 Sincronizar</button>
+                <button class="btn btn-secondary" onclick="exportToPDF()" id="exportBtn">📄 Exportar PDF</button>
+                <button class="btn btn-secondary" onclick="clearAllData()" id="clearBtn">🗑️ Limpiar Todo</button>
             </div>
             
             <div id="successMessage" style="display: none;"></div>
@@ -697,6 +809,17 @@
                 <span class="close" onclick="closeOrdersListModal()">&times;</span>
             </div>
             <div class="modal-body">
+                <!-- Filtros -->
+                <div class="filter-section">
+                    <h3>🔍 Filtros</h3>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" onclick="filterOrders('all')">Todos</button>
+                        <button class="filter-btn" onclick="filterOrders('pending')">Pendientes</button>
+                        <button class="filter-btn" onclick="filterOrders('completed')">Completados</button>
+                        <button class="filter-btn" onclick="filterOrders('today')">Hoy</button>
+                    </div>
+                </div>
+
                 <div id="ordersSummary" style="background: linear-gradient(135deg, #8ab6a3 0%, rgba(138, 182, 163, 0.1) 100%); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid #8ab6a3;">
                     <!-- Resumen de pedidos se cargará aquí -->
                 </div>
@@ -789,6 +912,7 @@
         let products = {};
         let tempProducts = {}; // Para ediciones temporales en el modal
         let orderHistory = []; // Historial de pedidos
+        let currentFilter = 'all'; // Filtro actual para pedidos
         
         // Configuración de Google Sheets
         let GOOGLE_SCRIPT_URL = '';
@@ -811,6 +935,7 @@
             updateDateTime();
             updateOrderNumber();
             updateTotal();
+            updateStats();
             
             // Actualizar fecha y hora cada minuto
             setInterval(updateDateTime, 60000);
@@ -820,6 +945,170 @@
             if (savedOrderNumber) {
                 currentOrderNumber = parseInt(savedOrderNumber) + 1;
                 updateOrderNumber();
+            }
+
+            // Mostrar estadísticas si hay pedidos
+            if (orderHistory.length > 0) {
+                document.getElementById('statsSection').style.display = 'block';
+                document.getElementById('newOrderBtn').style.display = 'block';
+            }
+        }
+
+        // VERSION6 - Actualizar estadísticas
+        function updateStats() {
+            const today = new Date();
+            const todayStr = today.toDateString();
+            
+            const ordersToday = orderHistory.filter(order => {
+                const orderDate = new Date(order.datetime);
+                return orderDate.toDateString() === todayStr;
+            }).length;
+            
+            const pendingCount = orderHistory.filter(order => order.status === 'pending').length;
+            
+            document.getElementById('totalOrdersToday').textContent = ordersToday;
+            document.getElementById('pendingOrders').textContent = pendingCount;
+        }
+
+        // VERSION6 - Iniciar nuevo pedido
+        function startNewOrder() {
+            // Limpiar formulario
+            document.getElementById('customerName').value = '';
+            
+            // Resetear cantidades
+            for (const key in quantities) {
+                quantities[key] = 0;
+                const qtyElement = document.getElementById(`qty-${key}`);
+                if (qtyElement) {
+                    qtyElement.textContent = '0';
+                }
+            }
+            
+            // Ocultar estado y botones
+            document.getElementById('orderStatus').style.display = 'none';
+            document.getElementById('statusButtons').style.display = 'none';
+            document.getElementById('printBtn').disabled = true;
+            
+            // Resetear pedido actual
+            currentOrder = null;
+            
+            updateTotal();
+            showSuccessMessage('✅ Listo para nuevo pedido');
+        }
+
+        // VERSION6 - Filtrar pedidos
+        function filterOrders(filter) {
+            currentFilter = filter;
+            
+            // Actualizar botones de filtro
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderOrdersList();
+        }
+
+        // VERSION6 - Exportar historial a PDF
+        function exportToPDF() {
+            if (orderHistory.length === 0) {
+                showErrorMessage('No hay pedidos para exportar');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            // Título
+            pdf.setFontSize(20);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('HISTORIAL DE PEDIDOS', 105, 20, { align: 'center' });
+            
+            // Fecha de exportación
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'normal');
+            const today = new Date().toLocaleDateString('es-ES');
+            pdf.text(`Exportado el: ${today}`, 105, 30, { align: 'center' });
+            
+            // Estadísticas
+            const totalOrders = orderHistory.length;
+            const completedOrders = orderHistory.filter(o => o.status === 'completed').length;
+            const pendingOrders = orderHistory.filter(o => o.status === 'pending').length;
+            
+            pdf.setFontSize(10);
+            pdf.text(`Total de pedidos: ${totalOrders}`, 20, 45);
+            pdf.text(`Completados: ${completedOrders}`, 20, 52);
+            pdf.text(`Pendientes: ${pendingOrders}`, 20, 59);
+            
+            // Línea separadora
+            pdf.line(20, 65, 190, 65);
+            
+            // Pedidos
+            let yPosition = 75;
+            pdf.setFontSize(8);
+            
+            orderHistory.slice(0, 30).forEach(order => { // Máximo 30 pedidos
+                if (yPosition > 270) {
+                    pdf.addPage();
+                    yPosition = 20;
+                }
+                
+                const orderDate = new Date(order.datetime);
+                const dateStr = orderDate.toLocaleDateString('es-ES');
+                const timeStr = orderDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(`Pedido #${order.orderNumber.toString().padStart(4, '0')} - ${order.customerName}`, 20, yPosition);
+                
+                pdf.setFont('helvetica', 'normal');
+                pdf.text(`${dateStr} ${timeStr} | ${order.status === 'completed' ? 'Completado' : 'Pendiente'} | Total: ${order.total}`, 20, yPosition + 5);
+                
+                yPosition += 12;
+            });
+            
+            if (orderHistory.length > 30) {
+                pdf.text(`... y ${orderHistory.length - 30} pedidos más`, 20, yPosition + 10);
+            }
+            
+            // Descargar PDF
+            pdf.save(`Historial_Pedidos_${today}.pdf`);
+            showSuccessMessage('📄 PDF exportado correctamente');
+        }
+
+        // VERSION6 - Limpiar todos los datos
+        function clearAllData() {
+            if (confirm('⚠️ ¿Estás seguro de que quieres eliminar TODOS los datos?\n\nEsto incluye:\n• Historial de pedidos\n• Productos personalizados\n• Configuración\n\nEsta acción NO se puede deshacer.')) {
+                if (confirm('🚨 ÚLTIMA CONFIRMACIÓN\n\n¿Realmente quieres eliminar todo?\nEscribe "CONFIRMAR" en el siguiente cuadro para continuar.')) {
+                    const confirmation = prompt('Escribe "CONFIRMAR" para eliminar todos los datos:');
+                    if (confirmation === 'CONFIRMAR') {
+                        // Limpiar localStorage
+                        localStorage.removeItem('orderHistory');
+                        localStorage.removeItem('products');
+                        localStorage.removeItem('lastOrderNumber');
+                        localStorage.removeItem('googleScriptUrl');
+                        
+                        // Resetear variables
+                        orderHistory = [];
+                        products = {...defaultProducts};
+                        currentOrderNumber = 1;
+                        currentOrder = null;
+                        GOOGLE_SCRIPT_URL = '';
+                        isOnlineMode = false;
+                        
+                        // Reinicializar
+                        init();
+                        
+                        // Mostrar sección de configuración
+                        document.getElementById('setupSection').style.display = 'block';
+                        document.getElementById('statsSection').style.display = 'none';
+                        document.getElementById('newOrderBtn').style.display = 'none';
+                        document.getElementById('syncBtn').style.display = 'none';
+                        
+                        showSuccessMessage('🗑️ Todos los datos han sido eliminados');
+                    } else {
+                        showErrorMessage('❌ Operación cancelada');
+                    }
+                }
             }
         }
 
@@ -853,6 +1142,12 @@
             document.getElementById('setupSection').style.display = 'none';
             document.getElementById('syncBtn').style.display = 'block';
             
+            // Mostrar estadísticas si hay pedidos
+            if (orderHistory.length > 0) {
+                document.getElementById('statsSection').style.display = 'block';
+                document.getElementById('newOrderBtn').style.display = 'block';
+            }
+            
             testCloudConnection();
             showSuccessMessage('✅ Configuración guardada. Probando conexión...');
         }
@@ -861,6 +1156,13 @@
         function skipCloudSetup() {
             document.getElementById('setupSection').style.display = 'none';
             updateCloudStatus('📱 Modo Local', 'cloud-offline');
+            
+            // Mostrar estadísticas si hay pedidos
+            if (orderHistory.length > 0) {
+                document.getElementById('statsSection').style.display = 'block';
+                document.getElementById('newOrderBtn').style.display = 'block';
+            }
+            
             showSuccessMessage('✅ Usando modo local. Los datos se guardan en este navegador.');
         }
 
@@ -908,6 +1210,7 @@
                 if (data.success) {
                     orderHistory = data.orders || [];
                     saveOrderHistory();
+                    updateStats();
                     
                     if (data.products) {
                         products = data.products;
@@ -1285,6 +1588,7 @@
             // Agregar al historial local
             orderHistory.push({...currentOrder});
             saveOrderHistory();
+            updateStats();
             
             // Guardar en localStorage
             localStorage.setItem('lastOrderNumber', currentOrderNumber.toString());
@@ -1299,6 +1603,10 @@
             document.getElementById('orderStatus').style.display = 'inline-block';
             document.getElementById('statusButtons').style.display = 'flex';
             document.getElementById('printBtn').disabled = false;
+            
+            // Mostrar estadísticas y botón de nuevo pedido
+            document.getElementById('statsSection').style.display = 'block';
+            document.getElementById('newOrderBtn').style.display = 'block';
             
             // Preparar para el siguiente pedido
             currentOrderNumber++;
@@ -1426,6 +1734,7 @@
                 orderHistory[historyIndex].status = 'completed';
                 orderHistory[historyIndex].completedAt = new Date();
                 saveOrderHistory();
+                updateStats();
             }
             
             // Intentar actualizar en la nube
@@ -1517,6 +1826,7 @@
                 orderHistory[orderIndex].status = 'completed';
                 orderHistory[orderIndex].completedAt = new Date();
                 saveOrderHistory();
+                updateStats();
                 
                 // Actualizar en la nube si está disponible
                 if (isOnlineMode) {
@@ -1626,7 +1936,7 @@
             document.getElementById('ordersListModal').style.display = 'none';
         }
 
-        // Renderizar lista de pedidos ordenada
+        // Renderizar lista de pedidos ordenada con filtros
         function renderOrdersList() {
             const summaryContainer = document.getElementById('ordersSummary');
             const listContainer = document.getElementById('ordersListContainer');
@@ -1635,6 +1945,21 @@
                 summaryContainer.innerHTML = '<p style="color: #486f54;">No hay pedidos registrados</p>';
                 listContainer.innerHTML = '<p style="text-align: center; color: #486f54; padding: 20px;">No hay pedidos para mostrar</p>';
                 return;
+            }
+            
+            // Filtrar pedidos según el filtro actual
+            let filteredOrders = [...orderHistory];
+            
+            if (currentFilter === 'pending') {
+                filteredOrders = orderHistory.filter(order => order.status === 'pending');
+            } else if (currentFilter === 'completed') {
+                filteredOrders = orderHistory.filter(order => order.status === 'completed');
+            } else if (currentFilter === 'today') {
+                const today = new Date().toDateString();
+                filteredOrders = orderHistory.filter(order => {
+                    const orderDate = new Date(order.datetime);
+                    return orderDate.toDateString() === today;
+                });
             }
             
             // Contar pedidos por estado
@@ -1659,13 +1984,17 @@
                 </div>
             `;
             
-            // Ordenar pedidos: primero pendientes (más antiguos primero), luego completados (más antiguos primero)
-            const sortedOrders = [
-                ...pendingOrders.sort((a, b) => a.orderNumber - b.orderNumber),
-                ...completedOrders.sort((a, b) => a.orderNumber - b.orderNumber)
-            ];
+            // Ordenar pedidos filtrados: primero pendientes (más antiguos primero), luego completados (más antiguos primero)
+            const pendingFiltered = filteredOrders.filter(o => o.status === 'pending').sort((a, b) => a.orderNumber - b.orderNumber);
+            const completedFiltered = filteredOrders.filter(o => o.status === 'completed').sort((a, b) => a.orderNumber - b.orderNumber);
+            const sortedOrders = [...pendingFiltered, ...completedFiltered];
             
             listContainer.innerHTML = '';
+            
+            if (sortedOrders.length === 0) {
+                listContainer.innerHTML = '<p style="text-align: center; color: #486f54; padding: 20px;">No hay pedidos que coincidan con el filtro seleccionado</p>';
+                return;
+            }
             
             sortedOrders.forEach(order => {
                 const orderItem = document.createElement('div');
@@ -1738,6 +2067,7 @@
                 orderHistory[orderIndex].status = 'completed';
                 orderHistory[orderIndex].completedAt = new Date();
                 saveOrderHistory();
+                updateStats();
                 
                 // Actualizar en la nube si está disponible
                 if (isOnlineMode) {
@@ -1768,5 +2098,5 @@
         // Inicializar cuando se carga la página
         window.onload = init;
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b97383b70ba12e',t:'MTc1NzI4MjEzNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b996867377a12e',t:'MTc1NzI4MzU2OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
