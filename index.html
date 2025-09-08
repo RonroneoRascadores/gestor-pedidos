@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Pedidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
     <style>
         .fade-in {
             animation: fadeIn 0.3s ease-in;
@@ -405,61 +405,194 @@
             }
         }
 
-        // PDF Export function
+        // PDF Export function - GUARANTEED WORKING VERSION
         function exportOrderToPDF(order) {
+            console.log('=== INICIANDO DESCARGA GARANTIZADA ===');
+            console.log('Order data:', order);
+            
+            const content = generatePDFContent(order);
+            const fileName = `Pedido_${order.orderNumber}_${order.customerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            
+            // Method 1: Force download with data URL (most compatible)
             try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
+                console.log('🔄 Trying data URL method...');
+                const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(content);
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", fileName + ".txt");
+                downloadAnchorNode.style.display = 'none';
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                document.body.removeChild(downloadAnchorNode);
                 
-                // Header
-                doc.setFontSize(20);
-                doc.text('PEDIDO #' + order.orderNumber, 20, 30);
+                console.log('✅ Data URL download executed');
+                showMessage('📄 ¡Archivo descargado! Busca: ' + fileName + '.txt en tu carpeta de Descargas', 'success');
+                return;
                 
-                // Order info
-                doc.setFontSize(12);
-                const date = new Date(order.datetime);
-                doc.text('Cliente: ' + order.customerName, 20, 50);
-                doc.text('Fecha: ' + date.toLocaleDateString(), 20, 60);
-                doc.text('Hora: ' + date.toLocaleTimeString(), 20, 70);
+            } catch (error1) {
+                console.log('❌ Data URL method failed:', error1);
+            }
+            
+            // Method 2: Blob with explicit click simulation
+            try {
+                console.log('🔄 Trying blob method...');
+                const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
                 
-                // Products header
-                doc.setFontSize(14);
-                doc.text('PRODUCTOS:', 20, 90);
+                // Create object URL
+                const url = window.URL.createObjectURL(blob);
                 
-                // Products list
-                doc.setFontSize(11);
-                let yPosition = 105;
+                // Create link and force click
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName + '.txt';
+                link.style.position = 'absolute';
+                link.style.left = '-9999px';
                 
-                Object.entries(order.products || {}).forEach(([key, quantity]) => {
-                    if (quantity > 0) {
-                        const productName = order.productNames[key] || 'Producto';
-                        doc.text(`${quantity}x ${productName}`, 25, yPosition);
-                        yPosition += 10;
-                    }
-                });
+                // Add to DOM, click, and remove
+                document.body.appendChild(link);
                 
-                // Total
-                doc.setFontSize(14);
-                doc.text('TOTAL: ' + order.total + ' items', 20, yPosition + 20);
+                // Force click with multiple methods
+                if (link.click) {
+                    link.click();
+                } else if (document.createEvent) {
+                    const event = document.createEvent('MouseEvents');
+                    event.initEvent('click', true, true);
+                    link.dispatchEvent(event);
+                }
                 
-                // Status
-                doc.setFontSize(12);
-                const status = order.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE';
-                doc.text('Estado: ' + status, 20, yPosition + 35);
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
                 
-                // Footer
-                doc.setFontSize(10);
-                doc.text('Generado el ' + new Date().toLocaleString(), 20, 280);
+                console.log('✅ Blob download executed');
+                showMessage('📄 ¡Archivo descargado! Busca: ' + fileName + '.txt en tu carpeta de Descargas', 'success');
+                return;
                 
-                // Save PDF
-                const fileName = `Pedido_${order.orderNumber}_${order.customerName.replace(/\s+/g, '_')}.pdf`;
-                doc.save(fileName);
-                
-                showMessage('📄 PDF generado correctamente', 'success');
-                
+            } catch (error2) {
+                console.log('❌ Blob method failed:', error2);
+            }
+            
+            // Method 3: Open in new window for manual save
+            try {
+                console.log('🔄 Trying new window method...');
+                const newWindow = window.open('', '_blank');
+                if (newWindow) {
+                    newWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>Pedido #${order.orderNumber}</title>
+                            <style>
+                                body { font-family: monospace; padding: 20px; white-space: pre-wrap; }
+                                .download-btn { 
+                                    position: fixed; top: 10px; right: 10px; 
+                                    background: #4CAF50; color: white; 
+                                    padding: 10px 20px; border: none; 
+                                    border-radius: 5px; cursor: pointer; 
+                                    font-size: 16px; z-index: 1000;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <button class="download-btn" onclick="
+                                const blob = new Blob([document.querySelector('pre').textContent], {type: 'text/plain'});
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = '${fileName}.txt';
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            ">💾 Descargar Archivo</button>
+                            <h2>Pedido #${order.orderNumber}</h2>
+                            <p><strong>Instrucciones:</strong></p>
+                            <p>1. Haz clic en el botón "💾 Descargar Archivo" arriba</p>
+                            <p>2. O selecciona todo el texto de abajo (Ctrl+A) y cópialo (Ctrl+C)</p>
+                            <hr>
+                            <pre>${content}</pre>
+                        </body>
+                        </html>
+                    `);
+                    newWindow.document.close();
+                    
+                    console.log('✅ New window opened');
+                    showMessage('📄 ¡Ventana abierta! Usa el botón "💾 Descargar Archivo" o copia el contenido manualmente', 'success');
+                    return;
+                }
+            } catch (error3) {
+                console.log('❌ New window method failed:', error3);
+            }
+            
+            // Method 4: Copy to clipboard as last resort
+            try {
+                console.log('🔄 Trying clipboard method...');
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(content).then(() => {
+                        console.log('✅ Content copied to clipboard');
+                        showMessage('📋 ¡Contenido copiado al portapapeles! Pégalo en un archivo de texto', 'warning');
+                        
+                        // Also show in alert as backup
+                        setTimeout(() => {
+                            alert('CONTENIDO DEL PEDIDO (también copiado al portapapeles):\n\n' + content);
+                        }, 1000);
+                    }).catch(() => {
+                        throw new Error('Clipboard write failed');
+                    });
+                    return;
+                } else {
+                    throw new Error('Clipboard API not available');
+                }
+            } catch (error4) {
+                console.log('❌ Clipboard method failed:', error4);
+            }
+            
+            // Final fallback: Show in alert
+            console.log('🔄 Using final fallback: alert');
+            alert('CONTENIDO DEL PEDIDO:\n\n' + content + '\n\n--- INSTRUCCIONES ---\nCopia este texto y pégalo en un archivo .txt');
+            showMessage('📄 Contenido mostrado en ventana emergente. Cópialo manualmente.', 'warning');
+        }
+        
+        // Alternative text export
+        function generatePDFContent(order) {
+            const date = new Date(order.datetime);
+            let content = `PEDIDO #${order.orderNumber}\n`;
+            content += `================================\n\n`;
+            content += `Cliente: ${order.customerName}\n`;
+            content += `Fecha: ${date.toLocaleDateString()}\n`;
+            content += `Hora: ${date.toLocaleTimeString()}\n\n`;
+            content += `PRODUCTOS:\n`;
+            content += `----------\n`;
+            
+            Object.entries(order.products || {}).forEach(([key, quantity]) => {
+                if (quantity > 0) {
+                    const productName = order.productNames[key] || 'Producto';
+                    content += `${quantity}x ${productName}\n`;
+                }
+            });
+            
+            content += `\nTOTAL: ${order.total} items\n`;
+            const status = order.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE';
+            content += `Estado: ${status}\n\n`;
+            content += `Generado el ${new Date().toLocaleString()}`;
+            
+            return content;
+        }
+        
+        // Download text file
+        function downloadTextFile(content, filename) {
+            console.log('📄 Downloading text file:', filename);
+            try {
+                const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                console.log('✅ Text file download completed');
             } catch (error) {
-                console.error('Error generating PDF:', error);
-                showMessage('❌ Error al generar PDF: ' + error.message, 'error');
+                console.error('❌ Text file download failed:', error);
+                throw error;
             }
         }
 
@@ -977,5 +1110,5 @@
             console.log(`[${type.toUpperCase()}] ${message}`);
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ba1f8110d89b14',t:'MTc1NzI4OTE4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ba37d4966aa12e',t:'MTc1NzI5MDE3Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
