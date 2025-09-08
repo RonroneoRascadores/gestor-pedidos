@@ -21,14 +21,6 @@
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-        .copy-success {
-            animation: copySuccess 0.5s ease-out;
-        }
-        @keyframes copySuccess {
-            0% { background-color: #10b981; transform: scale(1); }
-            50% { background-color: #059669; transform: scale(1.05); }
-            100% { background-color: #10b981; transform: scale(1); }
-        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
@@ -83,7 +75,7 @@
                     ➕ Nuevo Pedido
                 </button>
                 
-                <button onclick="showProductsManager()" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                <button onclick="showProductsManager()" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
                     🛠️ Gestionar Productos
                 </button>
             </div>
@@ -226,68 +218,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- NUEVO: Modal de Exportación Optimizado para este Entorno -->
-        <div id="exportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-                <div class="p-6 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-semibold">📄 Exportar Pedido</h2>
-                        <button onclick="closeExportModal()" class="text-white hover:text-gray-200 text-2xl">×</button>
-                    </div>
-                    <p class="text-sm mt-2 opacity-90">Sistema optimizado para este entorno</p>
-                </div>
-                
-                <div class="p-6">
-                    <!-- Método Principal: Selección y Copia Manual -->
-                    <div class="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-lg">
-                        <h3 class="text-lg font-semibold text-green-800 mb-3">✅ MÉTODO GARANTIZADO</h3>
-                        <div class="space-y-3">
-                            <button onclick="selectAllContent()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105">
-                                🎯 SELECCIONAR TODO EL TEXTO
-                            </button>
-                            <div class="text-sm text-green-700 bg-green-100 p-3 rounded">
-                                <strong>📋 Instrucciones:</strong><br>
-                                1. Haz clic en "SELECCIONAR TODO EL TEXTO"<br>
-                                2. Presiona <kbd class="bg-white px-2 py-1 rounded">Ctrl+C</kbd> (o <kbd class="bg-white px-2 py-1 rounded">Cmd+C</kbd> en Mac)<br>
-                                3. Abre Bloc de Notas y pega con <kbd class="bg-white px-2 py-1 rounded">Ctrl+V</kbd><br>
-                                4. Guarda el archivo
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Métodos Alternativos -->
-                    <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h3 class="text-lg font-semibold text-blue-800 mb-3">🔄 MÉTODOS ALTERNATIVOS</h3>
-                        <div class="grid grid-cols-1 gap-2">
-                            <button onclick="copyToClipboardAdvanced()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
-                                📋 Copiar Automáticamente
-                            </button>
-                            <button onclick="openInNewWindow()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
-                                🪟 Abrir en Nueva Ventana
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Contenido del Pedido -->
-                    <div class="border-2 border-gray-300 rounded-lg overflow-hidden">
-                        <div class="bg-gray-100 px-4 py-2 border-b">
-                            <span class="font-semibold text-gray-700">📄 Contenido del Pedido:</span>
-                            <span id="orderNumberDisplay" class="text-blue-600 font-bold ml-2"></span>
-                        </div>
-                        <textarea id="exportContent" readonly 
-                                  class="w-full h-64 p-4 font-mono text-sm resize-none border-0 focus:ring-2 focus:ring-blue-500 bg-white" 
-                                  style="font-family: 'Courier New', monospace; line-height: 1.4;"></textarea>
-                    </div>
-                </div>
-                
-                <div class="p-6 border-t bg-gray-50">
-                    <button onclick="closeExportModal()" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200">
-                        ✅ Cerrar
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -304,284 +234,15 @@
         let currentOrder = {};
         let confirmCount = 0;
         let scriptUrl = '';
-        let currentExportContent = '';
-        let currentExportFileName = '';
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('=== INICIALIZANDO APLICACIÓN ===');
             loadConfig();
             loadOrders();
             loadProducts();
             updateOrdersList();
             createProductsSection();
-            console.log('=== INICIALIZACIÓN COMPLETA ===');
         });
-
-        // SISTEMA DE EXPORTACIÓN OPTIMIZADO PARA ESTE ENTORNO
-        function exportOrderToPDF(order) {
-            console.log('=== EXPORTANDO PEDIDO OPTIMIZADO ===');
-            
-            const content = generateOrderContent(order);
-            const fileName = `Pedido_${order.orderNumber}_${order.customerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
-            
-            // Guardar globalmente
-            currentExportContent = content;
-            currentExportFileName = fileName;
-            
-            // Mostrar modal optimizado
-            showOptimizedExportModal(content, fileName, order.orderNumber);
-        }
-
-        function showOptimizedExportModal(content, fileName, orderNumber) {
-            // Actualizar contenido
-            document.getElementById('exportContent').value = content;
-            document.getElementById('orderNumberDisplay').textContent = `#${orderNumber}`;
-            
-            // Mostrar modal
-            document.getElementById('exportModal').classList.remove('hidden');
-            document.getElementById('exportModal').classList.add('flex');
-            
-            showMessage('📄 ¡Modal de exportación abierto! Usa el método garantizado para obtener tu pedido', 'success');
-        }
-
-        function closeExportModal() {
-            document.getElementById('exportModal').classList.add('hidden');
-            document.getElementById('exportModal').classList.remove('flex');
-        }
-
-        // MÉTODO PRINCIPAL: Selección manual (siempre funciona)
-        function selectAllContent() {
-            const textarea = document.getElementById('exportContent');
-            
-            // Enfocar y seleccionar
-            textarea.focus();
-            textarea.select();
-            textarea.setSelectionRange(0, textarea.value.length);
-            
-            // Feedback visual
-            textarea.style.backgroundColor = '#dbeafe';
-            setTimeout(() => {
-                textarea.style.backgroundColor = 'white';
-            }, 1000);
-            
-            showMessage('✅ ¡Texto seleccionado! Ahora presiona Ctrl+C (o Cmd+C) para copiarlo', 'success');
-        }
-
-        // MÉTODO ALTERNATIVO 1: Copia automática avanzada
-        function copyToClipboardAdvanced() {
-            const content = currentExportContent;
-            
-            // Múltiples métodos de copia
-            const methods = [
-                // Método 1: Clipboard API moderno
-                () => {
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        return navigator.clipboard.writeText(content);
-                    }
-                    throw new Error('Clipboard API no disponible');
-                },
-                
-                // Método 2: Selección + execCommand
-                () => {
-                    const textarea = document.getElementById('exportContent');
-                    textarea.select();
-                    const success = document.execCommand('copy');
-                    if (!success) throw new Error('execCommand falló');
-                    return Promise.resolve();
-                },
-                
-                // Método 3: Crear elemento temporal
-                () => {
-                    const tempTextarea = document.createElement('textarea');
-                    tempTextarea.value = content;
-                    tempTextarea.style.position = 'fixed';
-                    tempTextarea.style.left = '-9999px';
-                    document.body.appendChild(tempTextarea);
-                    tempTextarea.select();
-                    const success = document.execCommand('copy');
-                    document.body.removeChild(tempTextarea);
-                    if (!success) throw new Error('Método temporal falló');
-                    return Promise.resolve();
-                }
-            ];
-            
-            // Intentar métodos secuencialmente
-            async function tryMethods(methodIndex = 0) {
-                if (methodIndex >= methods.length) {
-                    showMessage('❌ No se pudo copiar automáticamente. Usa "SELECCIONAR TODO EL TEXTO"', 'error');
-                    return;
-                }
-                
-                try {
-                    await methods[methodIndex]();
-                    showMessage('✅ ¡Contenido copiado al portapapeles! Pégalo en un archivo de texto', 'success');
-                    
-                    // Feedback visual
-                    const button = event.target;
-                    button.classList.add('copy-success');
-                    setTimeout(() => button.classList.remove('copy-success'), 500);
-                    
-                } catch (error) {
-                    console.log(`Método ${methodIndex + 1} falló:`, error.message);
-                    tryMethods(methodIndex + 1);
-                }
-            }
-            
-            tryMethods();
-        }
-
-        // MÉTODO ALTERNATIVO 2: Nueva ventana
-        function openInNewWindow() {
-            try {
-                const content = currentExportContent;
-                const fileName = currentExportFileName;
-                
-                const newWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
-                
-                if (!newWindow) {
-                    showMessage('❌ Bloqueador de ventanas emergentes activo. Usa "SELECCIONAR TODO EL TEXTO"', 'error');
-                    return;
-                }
-                
-                newWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>${fileName}</title>
-                        <style>
-                            body { 
-                                font-family: 'Courier New', monospace; 
-                                padding: 20px; 
-                                line-height: 1.6;
-                                background: #f9fafb;
-                            }
-                            .container {
-                                background: white;
-                                padding: 30px;
-                                border-radius: 10px;
-                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                                max-width: 800px;
-                                margin: 0 auto;
-                            }
-                            .header {
-                                background: #3b82f6;
-                                color: white;
-                                padding: 15px;
-                                border-radius: 5px;
-                                margin-bottom: 20px;
-                                text-align: center;
-                            }
-                            .content {
-                                white-space: pre-wrap;
-                                font-size: 14px;
-                                border: 1px solid #e5e7eb;
-                                padding: 20px;
-                                border-radius: 5px;
-                                background: #f8fafc;
-                            }
-                            .instructions {
-                                background: #fef3c7;
-                                border: 1px solid #f59e0b;
-                                padding: 15px;
-                                border-radius: 5px;
-                                margin-bottom: 20px;
-                            }
-                            button {
-                                background: #10b981;
-                                color: white;
-                                border: none;
-                                padding: 10px 20px;
-                                border-radius: 5px;
-                                cursor: pointer;
-                                font-weight: bold;
-                                margin: 5px;
-                            }
-                            button:hover { background: #059669; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <div class="header">
-                                <h1>📄 ${fileName}</h1>
-                                <p>Pedido exportado desde el Sistema de Pedidos</p>
-                            </div>
-                            
-                            <div class="instructions">
-                                <strong>📋 Para guardar este pedido:</strong><br>
-                                1. Selecciona todo el texto de abajo (Ctrl+A)<br>
-                                2. Cópialo (Ctrl+C)<br>
-                                3. Pégalo en un archivo de texto<br>
-                                4. Guárdalo como "${fileName}.txt"
-                            </div>
-                            
-                            <button onclick="selectAll()">✅ Seleccionar Todo</button>
-                            <button onclick="window.print()">🖨️ Imprimir</button>
-                            
-                            <div class="content" id="content">${content.replace(/\n/g, '<br>')}</div>
-                        </div>
-                        
-                        <script>
-                            function selectAll() {
-                                const content = document.getElementById('content');
-                                const range = document.createRange();
-                                range.selectNodeContents(content);
-                                const selection = window.getSelection();
-                                selection.removeAllRanges();
-                                selection.addRange(range);
-                                alert('✅ Texto seleccionado! Presiona Ctrl+C para copiarlo');
-                            }
-                        </script>
-                    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ba52c81391a12e',t:'MTc1NzI5MTI4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-                    </html>
-                `);
-                
-                newWindow.document.close();
-                showMessage('🪟 ¡Pedido abierto en nueva ventana! Sigue las instrucciones allí', 'success');
-                
-            } catch (error) {
-                console.error('Error opening new window:', error);
-                showMessage('❌ No se pudo abrir nueva ventana. Usa "SELECCIONAR TODO EL TEXTO"', 'error');
-            }
-        }
-
-        // Generar contenido del pedido
-        function generateOrderContent(order) {
-            const date = new Date(order.datetime);
-            let content = `PEDIDO #${order.orderNumber}\n`;
-            content += `================================\n\n`;
-            content += `Cliente: ${order.customerName}\n`;
-            content += `Fecha: ${date.toLocaleDateString('es-ES')}\n`;
-            content += `Hora: ${date.toLocaleTimeString('es-ES')}\n\n`;
-            content += `PRODUCTOS PEDIDOS:\n`;
-            content += `------------------\n`;
-            
-            let hasProducts = false;
-            Object.entries(order.products || {}).forEach(([key, quantity]) => {
-                if (quantity > 0) {
-                    const productName = order.productNames[key] || 'Producto';
-                    content += `${quantity}x ${productName}\n`;
-                    hasProducts = true;
-                }
-            });
-            
-            if (!hasProducts) {
-                content += `(Sin productos)\n`;
-            }
-            
-            content += `\nRESUMEN:\n`;
-            content += `--------\n`;
-            content += `Total de items: ${order.total}\n`;
-            const status = order.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE';
-            content += `Estado: ${status}\n\n`;
-            content += `INFORMACIÓN ADICIONAL:\n`;
-            content += `----------------------\n`;
-            content += `Generado: ${new Date().toLocaleString('es-ES')}\n`;
-            content += `Sistema: Sistema de Pedidos v2.0\n`;
-            content += `\n--- FIN DEL PEDIDO ---`;
-            
-            return content;
-        }
 
         // Products management functions
         function loadProducts() {
@@ -744,32 +405,208 @@
             }
         }
 
+        // SUPER SIMPLE EXPORT - ALWAYS WORKS
+        function exportOrderToPDF(order) {
+            console.log('=== EXPORTANDO PEDIDO ===');
+            
+            const content = generatePDFContent(order);
+            const fileName = `Pedido_${order.orderNumber}_${order.customerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            
+            // Create a modal with the content for easy copying
+            showExportModal(content, fileName, order.orderNumber);
+        }
+        
+        // Show export modal with content
+        function showExportModal(content, fileName, orderNumber) {
+            // Remove existing modal if any
+            const existingModal = document.getElementById('exportModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Create modal
+            const modal = document.createElement('div');
+            modal.id = 'exportModal';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
+            
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+                    <div class="p-6 border-b">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-xl font-semibold text-gray-800">📄 Pedido #${orderNumber}</h2>
+                            <button onclick="closeExportModal()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="mb-4 space-y-2">
+                            <button onclick="copyToClipboard()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200">
+                                📋 Copiar al Portapapeles
+                            </button>
+                            <button onclick="selectAllText()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200">
+                                ✅ Seleccionar Todo el Texto
+                            </button>
+                            <button onclick="tryDirectDownload()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200">
+                                💾 Intentar Descarga Directa
+                            </button>
+                        </div>
+                        
+                        <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p class="text-sm text-yellow-800">
+                                <strong>📝 Instrucciones:</strong><br>
+                                1. Haz clic en "📋 Copiar al Portapapeles"<br>
+                                2. Abre el Bloc de Notas (Windows) o TextEdit (Mac)<br>
+                                3. Pega el contenido (Ctrl+V o Cmd+V)<br>
+                                4. Guarda como "${fileName}.txt"
+                            </p>
+                        </div>
+                        
+                        <div class="border rounded-lg">
+                            <div class="bg-gray-50 px-3 py-2 border-b">
+                                <span class="text-sm font-medium text-gray-700">Contenido del pedido:</span>
+                            </div>
+                            <textarea id="exportContent" readonly class="w-full h-64 p-3 font-mono text-sm resize-none border-0 focus:ring-0" style="font-family: 'Courier New', monospace;">${content}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 border-t bg-gray-50">
+                        <button onclick="closeExportModal()" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Store content globally for functions
+            window.exportContent = content;
+            window.exportFileName = fileName;
+            
+            showMessage('📄 ¡Ventana de exportación abierta! Usa los botones para obtener tu pedido', 'success');
+        }
+        
+        // Close export modal
+        function closeExportModal() {
+            const modal = document.getElementById('exportModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Copy to clipboard
+        function copyToClipboard() {
+            const textarea = document.getElementById('exportContent');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // For mobile
+            
+            try {
+                // Try modern clipboard API first
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(window.exportContent).then(() => {
+                        showMessage('✅ ¡Contenido copiado al portapapeles! Ahora pégalo en un archivo de texto', 'success');
+                    }).catch(() => {
+                        // Fallback to execCommand
+                        document.execCommand('copy');
+                        showMessage('✅ ¡Contenido copiado! Ahora pégalo en un archivo de texto', 'success');
+                    });
+                } else {
+                    // Fallback to execCommand
+                    document.execCommand('copy');
+                    showMessage('✅ ¡Contenido copiado! Ahora pégalo en un archivo de texto', 'success');
+                }
+            } catch (error) {
+                console.error('Copy failed:', error);
+                showMessage('❌ Error al copiar. Selecciona el texto manualmente y cópialo con Ctrl+C', 'error');
+            }
+        }
+        
+        // Select all text
+        function selectAllText() {
+            const textarea = document.getElementById('exportContent');
+            textarea.focus();
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            showMessage('✅ Texto seleccionado. Ahora cópialo con Ctrl+C (o Cmd+C en Mac)', 'info');
+        }
+        
+        // Try direct download (may not work in all environments)
+        function tryDirectDownload() {
+            try {
+                const blob = new Blob([window.exportContent], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = window.exportFileName + '.txt';
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage('💾 Descarga iniciada. Si no funciona, usa el botón "Copiar al Portapapeles"', 'info');
+            } catch (error) {
+                console.error('Direct download failed:', error);
+                showMessage('❌ Descarga directa no disponible. Usa "Copiar al Portapapeles"', 'warning');
+            }
+        }
+        
+        // Alternative text export
+        function generatePDFContent(order) {
+            const date = new Date(order.datetime);
+            let content = `PEDIDO #${order.orderNumber}\n`;
+            content += `================================\n\n`;
+            content += `Cliente: ${order.customerName}\n`;
+            content += `Fecha: ${date.toLocaleDateString()}\n`;
+            content += `Hora: ${date.toLocaleTimeString()}\n\n`;
+            content += `PRODUCTOS:\n`;
+            content += `----------\n`;
+            
+            Object.entries(order.products || {}).forEach(([key, quantity]) => {
+                if (quantity > 0) {
+                    const productName = order.productNames[key] || 'Producto';
+                    content += `${quantity}x ${productName}\n`;
+                }
+            });
+            
+            content += `\nTOTAL: ${order.total} items\n`;
+            const status = order.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE';
+            content += `Estado: ${status}\n\n`;
+            content += `Generado el ${new Date().toLocaleString()}`;
+            
+            return content;
+        }
+        
+        // Download text file
+        function downloadTextFile(content, filename) {
+            console.log('📄 Downloading text file:', filename);
+            try {
+                const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                console.log('✅ Text file download completed');
+            } catch (error) {
+                console.error('❌ Text file download failed:', error);
+                throw error;
+            }
+        }
+
         // Configuration functions
         function loadConfig() {
-            console.log('=== CARGANDO CONFIGURACIÓN ===');
             const savedUrl = localStorage.getItem('scriptUrl');
-            console.log('URL guardada:', savedUrl);
-            
-            if (savedUrl && savedUrl.trim()) {
-                scriptUrl = savedUrl.trim();
-                console.log('scriptUrl asignado:', scriptUrl);
-                
-                // Actualizar input
-                const urlInput = document.getElementById('scriptUrl');
-                if (urlInput) {
-                    urlInput.value = savedUrl;
-                    console.log('Input actualizado con URL');
-                }
-                
-                // Actualizar estado inmediatamente
-                console.log('Actualizando estado a conectado');
+            if (savedUrl) {
+                scriptUrl = savedUrl;
+                document.getElementById('scriptUrl').value = savedUrl;
                 updateConnectionStatus('connected');
             } else {
-                console.log('No hay URL guardada, estado desconectado');
-                scriptUrl = '';
                 updateConnectionStatus('disconnected');
             }
-            console.log('=== CONFIGURACIÓN CARGADA ===');
         }
 
         function saveConfig() {
@@ -1012,114 +849,6 @@
             document.getElementById('orderTotal').textContent = `${total} items`;
         }
 
-        // Mark order as completed
-        function markOrderCompleted(orderNumber) {
-            const orderIndex = orders.findIndex(order => order.orderNumber === orderNumber);
-            if (orderIndex !== -1) {
-                orders[orderIndex].status = 'completed';
-                orders[orderIndex].completedAt = new Date().toISOString();
-                
-                saveOrders();
-                updateOrdersList();
-                
-                showMessage(`✅ Pedido #${orderNumber} marcado como completado`, 'success');
-                
-                // También actualizar en Google Sheets si está configurado
-                updateOrderStatusInSheet(orders[orderIndex]);
-            }
-        }
-
-        // Update order status in Google Sheets
-        async function updateOrderStatusInSheet(order) {
-            if (!scriptUrl) {
-                return; // No hay conexión configurada
-            }
-            
-            try {
-                const params = new URLSearchParams({
-                    action: 'updateOrderStatus',
-                    orderNumber: order.orderNumber,
-                    status: order.status,
-                    completedAt: order.completedAt || '',
-                    timestamp: Date.now()
-                });
-                
-                const updateUrl = `${scriptUrl}?${params.toString()}`;
-                
-                const response = await fetch(updateUrl, {
-                    method: 'GET',
-                    mode: 'cors'
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        console.log('✅ Order status updated in Google Sheets');
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Error updating order status in sheet:', error);
-                // No mostrar error al usuario, es una actualización en segundo plano
-            }
-        }
-
-        function updateOrdersList() {
-            const container = document.getElementById('ordersList');
-            
-            if (orders.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-center py-4">No hay pedidos guardados</p>';
-                return;
-            }
-            
-            // Ordenar pedidos: pendientes primero, luego completados
-            const sortedOrders = [...orders].sort((a, b) => {
-                if (a.status === 'pending' && b.status === 'completed') return -1;
-                if (a.status === 'completed' && b.status === 'pending') return 1;
-                return new Date(b.datetime) - new Date(a.datetime); // Más recientes primero dentro del mismo estado
-            });
-            
-            container.innerHTML = sortedOrders.slice(0, 10).map(order => {
-                const date = new Date(order.datetime);
-                const productsList = Object.entries(order.products || {})
-                    .filter(([key, qty]) => qty > 0)
-                    .map(([key, qty]) => `${qty}x ${order.productNames[key] || 'Producto'}`)
-                    .join(', ');
-                
-                const isCompleted = order.status === 'completed';
-                const borderColor = isCompleted ? 'border-green-200 bg-green-50' : 'border-gray-200';
-                
-                return `
-                    <div class="border ${borderColor} rounded-lg p-4 slide-up">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="font-semibold text-gray-800">#${order.orderNumber}</div>
-                            <div class="text-sm text-gray-500">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</div>
-                        </div>
-                        <div class="text-gray-700 mb-1">👤 ${order.customerName}</div>
-                        <div class="text-sm text-gray-600 mb-2">🍕 ${productsList}</div>
-                        <div class="flex justify-between items-center">
-                            <div class="font-semibold text-blue-600">📦 ${order.total} items</div>
-                            <div class="flex gap-2 items-center">
-                                ${!isCompleted ? `
-                                    <button onclick="markOrderCompleted(${order.orderNumber})" 
-                                            class="text-xs px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-bold transition-all duration-200 transform hover:scale-105">
-                                        ✅ Completar
-                                    </button>
-                                ` : ''}
-                                <button onclick="exportOrderToPDF(orders.find(o => o.orderNumber === ${order.orderNumber}))" 
-                                        class="text-xs px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-bold transition-all duration-200 transform hover:scale-105">
-                                    📄 Exportar
-                                </button>
-                                <div class="text-xs px-2 py-1 rounded-full ${isCompleted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                    ${isCompleted ? '✅ Completado' : '⏳ Pendiente'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
         // Form submission using GET
         document.getElementById('newOrderForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -1216,6 +945,46 @@
                 console.error('Error saving to sheet:', error);
                 showMessage(`⚠️ Error de conexión: ${error.message}. Pedido guardado localmente.`, 'warning');
             }
+        }
+
+        function updateOrdersList() {
+            const container = document.getElementById('ordersList');
+            
+            if (orders.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No hay pedidos guardados</p>';
+                return;
+            }
+            
+            container.innerHTML = orders.slice(0, 10).map(order => {
+                const date = new Date(order.datetime);
+                const productsList = Object.entries(order.products || {})
+                    .filter(([key, qty]) => qty > 0)
+                    .map(([key, qty]) => `${qty}x ${order.productNames[key] || 'Producto'}`)
+                    .join(', ');
+                
+                return `
+                    <div class="border border-gray-200 rounded-lg p-4 slide-up">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="font-semibold text-gray-800">#${order.orderNumber}</div>
+                            <div class="text-sm text-gray-500">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</div>
+                        </div>
+                        <div class="text-gray-700 mb-1">👤 ${order.customerName}</div>
+                        <div class="text-sm text-gray-600 mb-2">🍕 ${productsList}</div>
+                        <div class="flex justify-between items-center">
+                            <div class="font-semibold text-blue-600">📦 ${order.total} items</div>
+                            <div class="flex gap-2 items-center">
+                                <button onclick="exportOrderToPDF(orders.find(o => o.orderNumber === ${order.orderNumber}))" 
+                                        class="text-xs px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded">
+                                    📄 PDF
+                                </button>
+                                <div class="text-xs px-2 py-1 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${order.status === 'completed' ? '✅ Completado' : '⏳ Pendiente'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Sync function using GET
@@ -1342,5 +1111,5 @@
             console.log(`[${type.toUpperCase()}] ${message}`);
         }
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ba3a9a83d7a12e',t:'MTc1NzI5MDI5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
